@@ -1,0 +1,278 @@
+<script lang="ts">
+  import { cn } from "$lib/utils";
+  import {
+    ArrowRight,
+    FileText,
+    Image as ImageIcon,
+    LayoutTemplate,
+    Lock,
+    Merge,
+    RotateCw,
+    Search,
+    Shield,
+    Sparkles,
+    Split,
+    Zap
+  } from "@lucide/svelte";
+
+  // 1. Data Structure for Tools
+  const categories = [
+    {
+      id: "essentials",
+      name: "Essentials",
+      description: "Daily drivers for PDF management.",
+      tools: [
+        {
+          id: "merge",
+          title: "Merge PDF",
+          desc: "Combine multiple files into one.",
+          icon: Merge,
+          color: "text-primary bg-blue-50",
+        },
+        {
+          id: "split",
+          title: "Split PDF",
+          desc: "Extract pages or split documents.",
+          icon: Split,
+          color: "text-orange-600 bg-orange-50",
+        },
+        {
+          id: "compress",
+          title: "Compress",
+          desc: "Reduce file size efficiently.",
+          icon: Zap,
+          color: "text-green-600 bg-green-50",
+        },
+      ],
+    },
+    {
+      id: "security",
+      name: "Security",
+      description: "Protect sensitive information.",
+      tools: [
+        {
+          id: "protect",
+          title: "Protect PDF",
+          desc: "Encrypt with password.",
+          icon: Lock,
+          color: "text-indigo-600 bg-indigo-50",
+        },
+        {
+          id: "unlock",
+          title: "Unlock PDF",
+          desc: "Remove passwords instantly.",
+          icon: Shield,
+          color: "text-red-600 bg-red-50",
+        },
+      ],
+    },
+    {
+      id: "convert",
+      name: "Conversion",
+      description: "Transform documents to other formats.",
+      tools: [
+        {
+          id: "pdf-to-img",
+          title: "PDF to JPG",
+          desc: "Convert pages to images.",
+          icon: ImageIcon,
+          color: "text-purple-600 bg-purple-50",
+        },
+        {
+          id: "img-to-pdf",
+          title: "JPG to PDF",
+          desc: "Create PDF from images.",
+          icon: FileText,
+          color: "text-pink-600 bg-pink-50",
+        },
+      ],
+    },
+    {
+      id: "edit",
+      name: "Editing",
+      description: "Modify page layout and content.",
+      tools: [
+        {
+          id: "rotate",
+          title: "Rotate",
+          desc: "Fix page orientation.",
+          icon: RotateCw,
+          color: "text-cyan-600 bg-cyan-50",
+        },
+        {
+          id: "organize",
+          title: "Organize",
+          desc: "Reorder and delete pages.",
+          icon: LayoutTemplate,
+          color: "text-teal-600 bg-teal-50",
+        },
+      ],
+    },
+  ];
+
+  let searchQuery = "";
+  let activeCategory = "all";
+
+  // 2. Reactive Filtering Logic
+  $: filteredCategories = categories
+    .map((cat) => {
+      // If specific category is selected, only show that one
+      if (activeCategory !== "all" && cat.id !== activeCategory) return null;
+
+      // Filter tools inside the category based on search
+      const matchingTools = cat.tools.filter(
+        (tool) =>
+          tool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          tool.desc.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+
+      // Return category only if it has matching tools
+      return matchingTools.length > 0 ? { ...cat, tools: matchingTools } : null;
+    })
+    .filter(Boolean);
+</script>
+
+<main class="relative z-10 container mx-auto px-4 py-24 md:py-32 max-w-7xl">
+  <div
+    class="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-16"
+  >
+    <div class="max-w-2xl">
+      <div
+        class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary backdrop-blur-sm mb-4"
+      >
+        <Sparkles size={12} />
+        <span>Explore Library</span>
+      </div>
+      <h1
+        class="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4"
+      >
+        Everything you need <br />
+        <span
+          class="text-transparent bg-clip-text bg-linear-to-r from-primary to-indigo-600"
+          >to master PDFs.</span
+        >
+      </h1>
+      <p class="text-lg text-muted-foreground">
+        Browser-based tools for every workflow. Secure, fast, and free.
+      </p>
+    </div>
+
+    <div class="w-full md:w-auto relative group flex items-center">
+      <Search
+        size={18}
+        class="size-7 my-auto text-primary absolute z-5 inset-y-0 left-0 pl-3 pointer-events-none group-focus-within:text-primary transition-colors"
+      />
+      <input
+        type="text"
+        name="explore-search"
+        bind:value={searchQuery}
+        placeholder="Search tools (e.g. 'Merge')..."
+        class="w-full md:w-80 rounded-xl border border-border/60 bg-card/60 pl-10 pr-4 py-3 text-sm font-medium shadow-sm backdrop-blur-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-blue-400 transition-all placeholder:text-muted-foreground"
+      />
+    </div>
+  </div>
+
+  <div
+    class="flex flex-wrap items-center gap-2 mb-12 border-b border-border/60 pb-6"
+  >
+    <button
+      class={cn(
+        "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+        activeCategory === "all"
+          ? "bg-foreground text-background shadow-md"
+          : "bg-card/50 text-foreground hover:bg-card hover:text-foreground",
+      )}
+      on:click={() => (activeCategory = "all")}
+    >
+      All Tools
+    </button>
+    {#each categories as cat}
+      <button
+        class={cn(
+          "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+          activeCategory === cat.id
+            ? "bg-foreground text-background shadow-md"
+            : "bg-card/50 text-foreground hover:bg-card hover:text-foreground",
+        )}
+        on:click={() => (activeCategory = cat.id)}
+      >
+        {cat.name}
+      </button>
+    {/each}
+  </div>
+
+  <div class="space-y-16">
+    {#if filteredCategories.length === 0}
+      <div class="flex flex-col items-center justify-center py-20 text-center">
+        <div
+          class="h-16 w-16 bg-muted/30 rounded-full flex items-center justify-center text-muted-foreground mb-4"
+        >
+          <Search size={24} />
+        </div>
+        <h3 class="text-lg font-semibold text-foreground">No tools found</h3>
+        <p class="text-muted-foreground">
+          Try searching for something else like "Split" or "Protect".
+        </p>
+      </div>
+    {/if}
+
+    {#each filteredCategories as category}
+      <section class="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-foreground tracking-tight">
+              {category?.name}
+            </h2>
+            <p class="text-muted-foreground text-sm">
+              {category?.description}
+            </p>
+          </div>
+          {#if activeCategory === "all"}
+            <button
+              on:click={() => (activeCategory = category?.id || "all")}
+              class="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              View all <ArrowRight size={14} />
+            </button>
+          {/if}
+        </div>
+
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+        >
+          {#each category?.tools as tool}
+            <a
+              href={`/${tool.id}`}
+              class="group relative flex flex-col p-5 h-full rounded-2xl border border-border bg-card/40 backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-card hover:shadow-xl hover:shadow-blue-900/5 hover:border-primary/20"
+            >
+              <div
+                class={`h-12 w-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${tool.color}`}
+              >
+                <svelte:component this={tool.icon} size={22} strokeWidth={2} />
+              </div>
+
+              <div class="flex-1">
+                <h3
+                  class="font-bold text-foreground text-lg mb-1 group-hover:text-primary transition-colors"
+                >
+                  {tool.title}
+                </h3>
+                <p class="text-sm text-muted-foreground leading-relaxed">
+                  {tool.desc}
+                </p>
+              </div>
+
+              <div
+                class="mt-4 flex items-center text-xs font-semibold text-primary opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
+              >
+                Launch Tool <ArrowRight size={12} class="ml-1" />
+              </div>
+            </a>
+          {/each}
+        </div>
+      </section>
+    {/each}
+  </div>
+
+
+</main>
