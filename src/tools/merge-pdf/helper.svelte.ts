@@ -1,0 +1,246 @@
+import { PdfEngine } from '$lib/pdf-engine.svelte';
+import { nanoid } from 'nanoid';
+import { PDFDocument } from 'pdf-lib';
+import type * as PDFJS from 'pdfjs-dist';
+
+export const MERGE_STATE_KEY = Symbol('MERGE_STATE');
+
+export interface UploadedFile {
+    id: string;
+    file: File;
+    name: string;
+    size: number;
+    pageCount: number;
+    // For File Mode: User can type "1-5, 8"
+    pageRange: string;
+    // Cache the PDF document for merging later
+    pdfDoc?: PDFDocument;
+}
+
+export interface PageItem {
+    id: string; // Unique ID for Sortable
+    fileId: string;
+    fileName: string;
+    pageIndex: number; // 0-based index in original file
+    visualRotation: number;
+}
+
+export class MergeState extends PdfEngine {
+    // State
+    files = $state<UploadedFile[]>([]);
+    allPages = $state<PageItem[]>([]); // Flattened list for Page Mode
+    mode = $state<'file' | 'page'>('file');
+
+    isProcessing = $state(false);
+    progress = $state({ current: 0, total: 0, text: '' });
+
+    // Internal
+    private pdfJsDocs: Map<string, PDFJS.PDFDocumentProxy> = new Map();
+
+
+    // --- Actions ---
+
+    async addFiles(newFiles: File[]) {
+        if (this.isProcessing) return;
+        this.isProcessing = true;
+        this.progress = { current: 0, total: newFiles.length, text: 'Analyzing PDFs...' };
+
+        try {
+            const pdfjs = await this.getPdfJs();
+
+            for (let i = 0; i < newFiles.length; i++) {
+                const file = newFiles[i];
+                this.progress = { current: i + 1, total: newFiles.length, text: `Loading ${file.name}...` };
+
+                const arrayBuffer = await file.arrayBuffer();
+
+                // 1. Load for Rendering (PDF.js)
+                const loadingTask = pdfjs.getDocument(new Uint8Array(arrayBuffer.slice(0)));
+                const docProxy = await loadingTask.promise;
+
+                const fileId = nanoid();
+                this.pdfJsDocs.set(fileId, docProxy);
+
+                // 2. Load for Merging (pdf-lib)
+                const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+
+                // 3. Create File Entry
+                const newFile: UploadedFile = {
+                    id: fileId,
+                    file,
+                    name: file.name,
+                    size: file.size,
+                    pageCount: docProxy.numPages,
+                    pageRange: '', // Empty = all
+                    pdfDoc
+                };
+
+                this.files.push(newFile);
+
+                // 4. Generate Page Items (for Page Mode)
+                for (let p = 0; p < docProxy.numPages; p++) {
+                    this.allPages.push({
+                        id: nanoid(),
+                        fileId: fileId,
+                        fileName: file.name,
+                        pageIndex: p,
+                        visualRotation: 0
+                    });
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Failed to load one or more PDF files.");
+        } finally {
+            this.isProcessing = false;
+        }
+    }
+
+    removeFile(fileId: string) {
+        this.files = this.files.filter(f => f.id !== fileId);
+        // Also remove associated pages
+        this.allPages = this.allPages.filter(p => p.fileId !== fileId);
+        this.pdfJsDocs.delete(fileId);
+    }
+
+    updateFileOrder(newIndices: number[]) {
+        // Reorder files array based on SortableJS indices
+        // This is a simple reorder, but we must also re-generate `allPages` 
+        // to match the new file order if the user switches to Page Mode later.
+        // However, if the user has already messed with Page Mode, we shouldn't overwrite it.
+        // For simplicity in this tool: File Mode order dominates initial Page Mode order.
+
+        // In Svelte 5, direct assignment triggers updates
+        const reordered = newIndices.map(i => this.files[i]);
+        this.files = reordered;
+
+        // Optional: Re-sort pages based on new file order? 
+        // Usually better to leave pages alone if they've been manually sorted.
+    }
+
+    // --- Rendering for Thumbnails ---
+    async renderThumbnail(canvas: HTMLCanvasElement, fileId: string, pageIndex: number) {
+        const doc = this.pdfJsDocs.get(fileId);
+        if (!doc) return;
+
+        const page = await doc.getPage(pageIndex + 1);
+        const viewport = page.getViewport({ scale: 1 });
+
+        // Thumbnail size ~200px
+        const scale = 200 / viewport.width;
+        const scaledViewport = page.getViewport({ scale });
+        const outputScale = window.devicePixelRatio || 1;
+
+        canvas.width = Math.floor(scaledViewport.width * outputScale);
+        canvas.height = Math.floor(scaledViewport.height * outputScale);
+        canvas.style.width = Math.floor(scaledViewport.width) + "px";
+        canvas.style.height = Math.floor(scaledViewport.height) + "px";
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            await page.render({
+                canvasContext: ctx,
+                viewport: scaledViewport,
+                transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined,
+                canvas
+            }).promise;
+        }
+    }
+
+    // --- Merge Logic ---
+
+    async mergeAndDownload() {
+        if (this.files.length === 0) return;
+        this.isProcessing = true;
+        this.progress = { current: 0, total: 100, text: 'Merging PDFs...' };
+
+        try {
+            const mergedPdf = await PDFDocument.create();
+
+            if (this.mode === 'file') {
+                // --- FILE MODE MERGE ---
+                for (const file of this.files) {
+                    if (!file.pdfDoc) continue;
+
+                    let pageIndices: number[] = [];
+
+                    // Parse Range (e.g. "1-3, 5")
+                    if (!file.pageRange.trim()) {
+                        // All pages
+                        pageIndices = file.pdfDoc.getPageIndices();
+                    } else {
+                        pageIndices = this.parsePageRange(file.pageRange, file.pageCount);
+                    }
+
+                    const copiedPages = await mergedPdf.copyPages(file.pdfDoc, pageIndices);
+                    copiedPages.forEach(page => mergedPdf.addPage(page));
+                }
+
+            } else {
+                // --- PAGE MODE MERGE ---
+                // We iterate the `allPages` array which reflects the user's custom sort order
+                const fileCache = new Map<string, PDFDocument>();
+                // Pre-fill cache
+                this.files.forEach(f => { if (f.pdfDoc) fileCache.set(f.id, f.pdfDoc); });
+
+                for (const pageItem of this.allPages) {
+                    const sourceDoc = fileCache.get(pageItem.fileId);
+                    if (sourceDoc) {
+                        const [copiedPage] = await mergedPdf.copyPages(sourceDoc, [pageItem.pageIndex]);
+                        mergedPdf.addPage(copiedPage);
+                    }
+                }
+            }
+
+            // Save and Download
+            const pdfBytes = await mergedPdf.save();
+            const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `merged_${new Date().getTime()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+        } catch (e) {
+            console.error(e);
+            alert("Error merging PDFs. Please check console.");
+        } finally {
+            this.isProcessing = false;
+        }
+    }
+
+    // Helper: Parse "1-3, 5" string to [0, 1, 2, 4]
+    private parsePageRange(rangeStr: string, maxPages: number): number[] {
+        const indices = new Set<number>();
+        const parts = rangeStr.split(',');
+
+        for (const part of parts) {
+            const trimmed = part.trim();
+            if (trimmed.includes('-')) {
+                const [start, end] = trimmed.split('-').map(Number);
+                if (!isNaN(start) && !isNaN(end)) {
+                    // Clamp to valid range
+                    const s = Math.max(1, start);
+                    const e = Math.min(maxPages, end);
+                    for (let i = s; i <= e; i++) indices.add(i - 1);
+                }
+            } else {
+                const p = Number(trimmed);
+                if (!isNaN(p) && p >= 1 && p <= maxPages) {
+                    indices.add(p - 1);
+                }
+            }
+        }
+        return Array.from(indices);
+    }
+
+    reset() {
+        this.files = [];
+        this.allPages = [];
+        this.pdfJsDocs.clear();
+        this.mode = 'file';
+    }
+}

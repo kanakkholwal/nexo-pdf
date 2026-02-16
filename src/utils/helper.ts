@@ -1,6 +1,6 @@
+import { resetState, state } from '$lib/state.svelte';
+import { hideLoader, showAlert, showLoader } from '$lib/store.svelte';
 import createModule from '@neslinesli93/qpdf-wasm';
-import { state, resetState } from '../state.js';
-import * as pdfjsLib from 'pdfjs-dist';
 
 const STANDARD_SIZES = {
   A4: { width: 595.28, height: 841.89 },
@@ -50,10 +50,10 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16) / 255,
-        g: parseInt(result[2], 16) / 255,
-        b: parseInt(result[3], 16) / 255,
-      }
+      r: parseInt(result[1], 16) / 255,
+      g: parseInt(result[2], 16) / 255,
+      b: parseInt(result[3], 16) / 255,
+    }
     : { r: 0, g: 0, b: 0 };
 }
 
@@ -137,7 +137,7 @@ export function parsePageRanges(
  * @param {string} isoDateString - The ISO 8601 date string.
  * @returns {string} A localized date and time string, or the original string if parsing fails.
  */
-export function formatIsoDate(isoDateString) {
+export function formatIsoDate(isoDateString: any): string {
   if (!isoDateString || typeof isoDateString !== 'string') {
     return isoDateString; // Return original value if it's not a valid string
   }
@@ -166,7 +166,7 @@ export async function initializeQpdf() {
   showLoader('Initializing PDF engine...');
   try {
     qpdfInstance = await createModule({
-      locateFile: () => import.meta.env.BASE_URL + 'qpdf.wasm',
+      locateFile: () => "/qpdf.wasm",
     });
   } catch (error) {
     console.error('Failed to initialize qpdf-wasm:', error);
@@ -180,15 +180,6 @@ export async function initializeQpdf() {
   }
 
   return qpdfInstance;
-}
-
-export function initializeIcons(): void {
-  createIcons({
-    attrs: {
-      class: 'bento-icon',
-      'stroke-width': '1.5',
-    },
-  });
 }
 
 export function formatStars(num: number) {
@@ -265,7 +256,16 @@ export function resetAndReloadTool(preResetCallback?: () => void) {
  * @param src The source to load (url string, typed array, or parameters object)
  * @returns The PDF loading task
  */
-export function getPDFDocument(src: any) {
+export async function getPDFDocument(src: any) {
+  const pdfjsLib = await import('pdfjs-dist');
+
+  // Set worker source relative to public dir if not already set
+  if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url
+    ).toString();
+  }
   let params = src;
 
   // Handle different input types similar to how getDocument handles them,

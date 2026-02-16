@@ -1,0 +1,81 @@
+import {
+    FileStack,
+    FileText,
+    ImageIcon,
+    Scissors,
+    Zap,
+    type Icon
+} from '@lucide/svelte';
+import type { Component } from 'svelte';
+
+// import individual tool components
+import CompressPdfTool from './compress-pdf/tool.svelte';
+import ImgToPdfTool from './img-to-pdf/tool.svelte';
+import MergePdfTool from './merge-pdf/tool.svelte';
+import MultiPdfTool from './multi-pdf/tool.svelte';
+import SplitPdfTool from './split-pdf/tool.svelte';
+
+
+export interface ToolConfig {
+    slug: string;
+    title: string;
+    description: string;
+    icon: typeof Icon;
+    component: Component;
+    color: string;
+    category?: string;
+}
+/*
+* Centralized configuration for all tools in the application.
+* Each tool is defined with its slug, title, description, icon, Svelte component, and branding color.
+* This allows for easy addition of new tools and consistent rendering across the app.
+*/
+export const tools: Record<string, ToolConfig> = {
+    'merge-pdf': {
+        slug: 'merge-pdf',
+        title: 'Merge PDF',
+        description: 'Combine multiple PDF files into one single document in seconds. Drag and drop to reorder pages.',
+        category: 'PDF Management',
+        icon: FileStack,
+        component: MergePdfTool,
+        color: 'text-indigo-500'
+    },
+    "multi-pdf": {
+        slug: "multi-pdf",
+        title: "PDF Multi-Tool",
+        description: "Upload, rearrange, rotate, and export multiple PDF pages with ease.",
+        category: 'Essential',
+        icon: FileText,
+        component: MultiPdfTool,
+        color: "text-primary",
+    },
+    'split-pdf': {
+        slug: 'split-pdf',
+        title: 'Split PDF',
+        description: 'Extract pages, split ranges, or divide your PDF into multiple files.',
+        category: 'Essential',
+        icon: Scissors,
+        component: SplitPdfTool,
+        color: 'text-pink-500'
+    },
+    'compress-pdf': {
+        slug: 'compress-pdf',
+        title: 'Compress PDF',
+        description: 'Reduce file size while maintaining quality. Advanced optimization options.',
+        category: 'Essential',
+        icon: Zap,
+        component: CompressPdfTool,
+        color: 'text-yellow-500'
+    },
+    'img-to-pdf': {
+        slug: 'img-to-pdf',
+        title: 'Image to PDF',
+        description: 'Convert images to PDF instantly. Supports JPG, PNG, and more.',
+        category: 'Conversion',
+        icon: ImageIcon,
+        component: ImgToPdfTool,
+        color: 'text-orange-500'
+    },
+};
+
+export const getTool = (slug: string) => tools[slug] || null;

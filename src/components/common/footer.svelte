@@ -1,17 +1,23 @@
 <script lang="ts">
-  import { Disc, FileText, Github, Twitter } from "@lucide/svelte";
+  import {
+    ArrowUpRight,
+    Disc,
+    FileText,
+    Github,
+    Twitter
+  } from "@lucide/svelte";
 
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = [
+  // Expanded data for a better 4-column grid look
+  const footerSections = [
     {
       title: "Product",
       links: [
         { label: "Merge PDF", href: "/merge" },
         { label: "Split PDF", href: "/split" },
         { label: "Compress", href: "/compress" },
-        { label: "Pricing", href: "/pricing" },
-        { label: "Changelog", href: "/updates" },
+        { label: "Convert", href: "/convert" },
       ],
     },
     {
@@ -35,68 +41,109 @@
   ];
 </script>
 
-<footer class="w-full text-sm">
-  <div class="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 gap-12 lg:grid-cols-4 lg:gap-8">
+<footer class="w-full border-t border-border/40 bg-background text-sm">
+  <div class="container mx-auto max-w-7xl px-6 py-12 md:py-20 lg:px-8">
+    <div class="xl:grid xl:grid-cols-5 xl:gap-8">
       
-      <div class="space-y-6 lg:col-span-1">
-        <a href="/" class="flex items-center gap-2.5 group">
+      <div class="space-y-8 xl:col-span-2">
+        <a href="/" class="flex items-center gap-2 group w-fit">
           <div
-            class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15"
+            class="flex size-8 items-center justify-center rounded-lg border border-border bg-gradient-to-br from-primary/10 to-transparent text-primary shadow-sm transition-all group-hover:shadow-md group-hover:from-primary/20"
           >
-            <FileText size={20} strokeWidth={2.5} />
+            <FileText size={16} strokeWidth={2.5} />
           </div>
-          <span class="font-bold text-lg tracking-tight text-foreground">Nexo PDF</span>
-        </a>
-        <p class="text-muted-foreground leading-relaxed max-w-xs">
-          The privacy-first PDF toolkit for professionals. Process documents locally without them ever touching a server.
-        </p>
-        
-        <div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          <span class="text-lg font-bold tracking-tight text-foreground">
+            Nexo PDF
           </span>
-          All systems operational
+        </a>
+
+        <p class="max-w-xs text-sm leading-6 text-muted-foreground">
+          The privacy-first PDF toolkit for professionals. Process documents locally via WebAssembly without them ever touching a server.
+        </p>
+
+        <div class="flex items-center gap-4">
+          <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            All Systems Normal
+          </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-8 md:grid-cols-3 lg:col-span-3">
-        {#each footerLinks as section}
+      <div class="mt-16 grid grid-cols-2 gap-8 xl:col-span-3 xl:mt-0">
+        <div class="md:grid md:grid-cols-2 md:gap-8">
+          
           <div>
-            <h3 class="font-semibold text-foreground tracking-tight mb-4">{section.title}</h3>
-            <ul class="space-y-3">
-              {#each section.links as link}
+            <h3 class="text-sm font-semibold leading-6 text-foreground tracking-tight">Product</h3>
+            <ul role="list" class="mt-6 space-y-4">
+              {#each footerSections[0].links as link}
                 <li>
-                  <a
-                    href={link.href}
-                    class="text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <a href={link.href} class="group flex w-fit items-center gap-1 text-sm leading-6 text-muted-foreground transition-colors hover:text-foreground">
+                    {link.label}
+                    <ArrowUpRight size={12} class="opacity-0 -translate-y-0.5 translate-x-0.5 transition-all group-hover:opacity-100" />
+                  </a>
+                </li>
+              {/each}
+            </ul>
+          </div>
+
+          <div class="mt-10 md:mt-0">
+            <h3 class="text-sm font-semibold leading-6 text-foreground tracking-tight">Resources</h3>
+            <ul role="list" class="mt-6 space-y-4">
+              {#each footerSections[1].links as link}
+                <li>
+                  <a href={link.href} class="group flex w-fit items-center text-sm leading-6 text-muted-foreground transition-all hover:translate-x-0.5 hover:text-foreground">
                     {link.label}
                   </a>
                 </li>
               {/each}
             </ul>
           </div>
-        {/each}
+        </div>
+
+        <div class="md:grid md:grid-cols-2 md:gap-8">
+          <div>
+            <h3 class="text-sm font-semibold leading-6 text-foreground tracking-tight">Legal</h3>
+            <ul role="list" class="mt-6 space-y-4">
+              {#each footerSections[2].links as link}
+                <li>
+                  <a href={link.href} class="group flex w-fit items-center text-sm leading-6 text-muted-foreground transition-all hover:translate-x-0.5 hover:text-foreground">
+                    {link.label}
+                  </a>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="mt-16 border-t border-border/40 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-      <p class="text-muted-foreground text-xs">
-        &copy; {currentYear} Nexo PDF. All rights reserved.
-      </p>
-      
-      <div class="flex items-center gap-4">
-        <a href="https://github.com/kanakkholwal/nexo-pdf" target="_blank" class="text-muted-foreground hover:text-foreground transition-colors" aria-label="GitHub">
-          <Github size={18} />
-        </a>
-        <a href="https://twitter.com/nexo_pdf" target="_blank" class="text-muted-foreground hover:text-foreground transition-colors" aria-label="Twitter">
-          <Twitter size={18} />
-        </a>
-        <a href="https://discord.com" target="_blank" class="text-muted-foreground hover:text-foreground transition-colors" aria-label="Discord">
-          <Disc size={18} />
-        </a>
+    <div class="mt-16 border-t border-border/40 pt-8 sm:mt-20 lg:mt-24">
+      <div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+        
+        <p class="text-xs leading-5 text-muted-foreground text-center md:text-left">
+          &copy; {currentYear} Nexo PDF. Open Source under MIT License.
+        </p>
+
+        <div class="flex items-center gap-6">
+           <div class="flex gap-4">
+            <a href="https://github.com/kanakkholwal/nexo-pdf" class="text-muted-foreground transition-colors hover:text-foreground">
+              <span class="sr-only">GitHub</span>
+              <Github size={18} />
+            </a>
+            <a href="https://twitter.com" class="text-muted-foreground transition-colors hover:text-foreground">
+              <span class="sr-only">Twitter</span>
+              <Twitter size={18} />
+            </a>
+            <a href="https://discord.com" class="text-muted-foreground transition-colors hover:text-foreground">
+              <span class="sr-only">Discord</span>
+              <Disc size={18} />
+            </a>
+          </div>
+        </div>
+        
       </div>
     </div>
   </div>

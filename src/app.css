@@ -52,11 +52,14 @@
   --input: hsl(220 13% 91%);
   --input: oklch(.922 0 0);
 
+  --dark: hsl(222.33deg 49.39% 11.3%);
+  --dark-foreground: hsl(0deg 0% 92.16%);
   --ring: var(--primary, hsl(262.1 83.3% 57.8%));
   --radius: 0.75rem;
+  --max-app-width: clamp(1280px, 80vw, 1920px);
 
 
-  --sidebar: var(--background);
+  --sidebar: var(--card);
   --sidebar-background: var(--card);
   --sidebar-foreground: var(--card-foreground);
   --sidebar-primary: var(--primary);
@@ -160,7 +163,8 @@
   /* --input: hsl(0, 0%, 14%); */
   --input: oklch(1 0 0/15%);
   --ring: var(--primary, hsl(250deg 100% 80%));
-
+  --dark: hsl(0deg 0% 92.16%);
+  --dark-foreground: hsl(0deg 0% 9.8%);
   /* dark:chart colors */
   /* Charts: Bright Pastels for dark mode */
   --chart-1: hsl(263 70% 65%);
@@ -236,6 +240,8 @@
   --color-primary-green: var(--primary-green);
   --color-primary-red: var(--primary-red);
 
+  --color-dark: var(--dark);
+  --color-dark-foreground: var(--dark-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -258,10 +264,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --spacing-app: var(--max-app-width);
   /* --color-white: hsla(0, 0%, 93%, 1); */
 
   --font-mono: 'Space Mono', 'Fira Code', 'Courier New', 'Courier', 'monospace';
-  --font-sans: 'Google Sans','Inter', 'Helvetica', 'Arial', sans-serif;
+  --font-sans: 'Google Sans', 'Inter', 'Helvetica', 'Arial', sans-serif;
 
   --shadow-button: 0px -1px 0px 0px hsla(0, 0%, 100%, 0.04), 0px 0px 0px 1px hsla(0, 0%, 100%, 0.12), 0px 0px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 2px 0px rgba(0, 0, 0, 0.04), 0px 4px 2px 0px rgba(0, 0, 0, 0.04), 0px 6px 3px 0px rgba(0, 0, 0, 0.04);
 
@@ -545,30 +552,6 @@
 
   }
 
-}
-
-@layer utilities {
-
-  .popup {
-    opacity: 0;
-    transition: all 0.5s ease-in-out;
-    animation: pop 0.5s ease-in-out forwards;
-  }
-
-  @keyframes pop {
-    0% {
-      opacity: 0;
-      -webkit-transform: translateY(20px);
-      transform: translateY(20px);
-    }
-
-    100% {
-      opacity: 1;
-      -webkit-transform: translateY(0);
-      transform: translateY(0);
-    }
-  }
-
   /* Hide scrollbar for Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar,
   .scrollbar-hide::-webkit-scrollbar {
@@ -583,8 +566,9 @@
     scrollbar-width: none;
     /* Firefox */
   }
-
 }
+
+
 
 body {
   font-weight: 400;
@@ -598,15 +582,14 @@ body {
        - starts from 1024px (for tablets/small desktops)
        - scales with viewport
        - grows reasonably beyond 1440px without a hard limit */
-  --max-app-width: clamp(1280px, 80vw, 1920px);
   @apply bg-background text-foreground selection:bg-primary/75 selection:text-white selection:rounded-2xl;
-  
+
 }
 
 /* Custom Grid Background Utility */
 .bg-grid-pattern {
   background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
 }

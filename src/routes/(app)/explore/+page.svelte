@@ -1,138 +1,68 @@
 <script lang="ts">
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/state";
+  import { toolsCategories } from "$constants/tools";
   import { cn } from "$lib/utils";
-  import {
-    ArrowRight,
-    FileText,
-    Image as ImageIcon,
-    LayoutTemplate,
-    Lock,
-    Merge,
-    RotateCw,
-    Search,
-    Shield,
-    Sparkles,
-    Split,
-    Zap
-  } from "@lucide/svelte";
+  import { ArrowRight, Search, Sparkles } from "@lucide/svelte";
 
-  // 1. Data Structure for Tools
-  const categories = [
-    {
-      id: "essentials",
-      name: "Essentials",
-      description: "Daily drivers for PDF management.",
-      tools: [
-        {
-          id: "merge",
-          title: "Merge PDF",
-          desc: "Combine multiple files into one.",
-          icon: Merge,
-          color: "text-primary bg-blue-50",
-        },
-        {
-          id: "split",
-          title: "Split PDF",
-          desc: "Extract pages or split documents.",
-          icon: Split,
-          color: "text-orange-600 bg-orange-50",
-        },
-        {
-          id: "compress",
-          title: "Compress",
-          desc: "Reduce file size efficiently.",
-          icon: Zap,
-          color: "text-green-600 bg-green-50",
-        },
-      ],
-    },
-    {
-      id: "security",
-      name: "Security",
-      description: "Protect sensitive information.",
-      tools: [
-        {
-          id: "protect",
-          title: "Protect PDF",
-          desc: "Encrypt with password.",
-          icon: Lock,
-          color: "text-indigo-600 bg-indigo-50",
-        },
-        {
-          id: "unlock",
-          title: "Unlock PDF",
-          desc: "Remove passwords instantly.",
-          icon: Shield,
-          color: "text-red-600 bg-red-50",
-        },
-      ],
-    },
-    {
-      id: "convert",
-      name: "Conversion",
-      description: "Transform documents to other formats.",
-      tools: [
-        {
-          id: "pdf-to-img",
-          title: "PDF to JPG",
-          desc: "Convert pages to images.",
-          icon: ImageIcon,
-          color: "text-purple-600 bg-purple-50",
-        },
-        {
-          id: "img-to-pdf",
-          title: "JPG to PDF",
-          desc: "Create PDF from images.",
-          icon: FileText,
-          color: "text-pink-600 bg-pink-50",
-        },
-      ],
-    },
-    {
-      id: "edit",
-      name: "Editing",
-      description: "Modify page layout and content.",
-      tools: [
-        {
-          id: "rotate",
-          title: "Rotate",
-          desc: "Fix page orientation.",
-          icon: RotateCw,
-          color: "text-cyan-600 bg-cyan-50",
-        },
-        {
-          id: "organize",
-          title: "Organize",
-          desc: "Reorder and delete pages.",
-          icon: LayoutTemplate,
-          color: "text-teal-600 bg-teal-50",
-        },
-      ],
-    },
-  ];
+  let searchQuery = $state("");
+  let activeCategory = $state(page.url.searchParams.get("category") || "all");
 
-  let searchQuery = "";
-  let activeCategory = "all";
+  let filteredCategories = $derived(
+    toolsCategories
+      .map((cat) => {
+        // If specific category is selected, only show that one
+        if (activeCategory !== "all" && cat.id !== activeCategory) return null;
 
-  // 2. Reactive Filtering Logic
-  $: filteredCategories = categories
-    .map((cat) => {
-      // If specific category is selected, only show that one
-      if (activeCategory !== "all" && cat.id !== activeCategory) return null;
+        // Filter tools inside the category based on search
+        const matchingTools = cat.tools.filter(
+          (tool) =>
+            tool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            tool.desc.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
 
-      // Filter tools inside the category based on search
-      const matchingTools = cat.tools.filter(
-        (tool) =>
-          tool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          tool.desc.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+        // Return category only if it has matching tools
+        return matchingTools.length > 0
+          ? { ...cat, tools: matchingTools }
+          : null;
+      })
+      .filter(Boolean),
+  );
+    
+  function updateCategory(category: string) {
+    const url = new URL(page.url);
+    if (category === "all") {
+      url.searchParams.delete("category");
+    } else {
+      url.searchParams.set("category", category);
+    }
+    activeCategory = category;
+    // Update the URL without a full page reload or creating history entries
+    replaceState(url.href, {
+      scroll: false,
+    });
+  }
+  $effect(() => {
+    updateCategory(activeCategory);
+  });
+  $effect(() => {
+    handleSearchInput(searchQuery);
+  });
+  function handleSearchInput(searchQuery: string) {
+    const url = new URL(page.url);
+    if (searchQuery) {
+      url.searchParams.set("search", searchQuery);
+    } else {
+      url.searchParams.delete("search");
+    }
+    replaceState(url.href, {
+      scroll: false,
+    });
+  }
 
-      // Return category only if it has matching tools
-      return matchingTools.length > 0 ? { ...cat, tools: matchingTools } : null;
-    })
-    .filter(Boolean);
 </script>
 
-<main class="relative z-10 container mx-auto px-4 py-24 md:py-32 max-w-7xl">
+<main class="relative z-10 container mx-auto px-4 py-24 md:py-32 pt-10! max-w-app">
   <div
     class="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-16"
   >
@@ -163,7 +93,7 @@
         class="size-7 my-auto text-primary absolute z-5 inset-y-0 left-0 pl-3 pointer-events-none group-focus-within:text-primary transition-colors"
       />
       <input
-        type="text"
+        type="search"
         name="explore-search"
         bind:value={searchQuery}
         placeholder="Search tools (e.g. 'Merge')..."
@@ -182,11 +112,11 @@
           ? "bg-foreground text-background shadow-md"
           : "bg-card/50 text-foreground hover:bg-card hover:text-foreground",
       )}
-      on:click={() => (activeCategory = "all")}
+      onclick={() => updateCategory("all")}
     >
       All Tools
     </button>
-    {#each categories as cat}
+    {#each toolsCategories as cat}
       <button
         class={cn(
           "px-4 py-2 rounded-full text-sm font-medium transition-all border",
@@ -194,7 +124,7 @@
             ? "bg-foreground text-background shadow-md"
             : "bg-card/50 text-foreground hover:bg-card hover:text-foreground",
         )}
-        on:click={() => (activeCategory = cat.id)}
+        onclick={() => (activeCategory = cat.id)}
       >
         {cat.name}
       </button>
@@ -229,7 +159,7 @@
           </div>
           {#if activeCategory === "all"}
             <button
-              on:click={() => (activeCategory = category?.id || "all")}
+              onclick={() => updateCategory(category?.id || "all")}
               class="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
               View all <ArrowRight size={14} />
@@ -242,13 +172,16 @@
         >
           {#each category?.tools as tool}
             <a
-              href={`/${tool.id}`}
-              class="group relative flex flex-col p-5 h-full rounded-2xl border border-border bg-card/40 backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-card hover:shadow-xl hover:shadow-blue-900/5 hover:border-primary/20"
+              href={`/tools/${tool.id}`}
+              class="group relative flex flex-col p-5 h-full rounded-2xl border border-border bg-card backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-card hover:shadow-xl hover:shadow-blue-900/5 hover:border-primary/20"
             >
               <div
                 class={`h-12 w-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${tool.color}`}
               >
-                <svelte:component this={tool.icon} size={22} strokeWidth={2} />
+                {#if tool.icon}
+                  {@const Icon = tool.icon}
+                  <Icon size={22} strokeWidth={2} />
+                {/if}
               </div>
 
               <div class="flex-1">
@@ -273,6 +206,4 @@
       </section>
     {/each}
   </div>
-
-
 </main>
