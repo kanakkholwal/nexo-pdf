@@ -48,12 +48,11 @@
   let uploadArea: ReturnType<typeof UploadArea>;
 </script>
 
-{#if pdfState.pages.length === 0}
-  <UploadArea
-    bind:this={uploadArea}
-    onFilesSelected={(files) => pdfState.loadPdfs(files)}
-  />
-{/if}
+<UploadArea
+  bind:this={uploadArea}
+  onFilesSelected={(files) => pdfState.loadPdfs(files)}
+  class={pdfState.pages.length === 0 ? "h-full" : "hidden"}
+/>
 
 {#if pdfState.pages.length > 0}
   <div
@@ -69,14 +68,19 @@
 {/if}
 
 <div
-  class={cn("fixed bottom-8 top-auto inset-x-0 z-40 mx-auto w-full max-w-3xl px-4", pdfState.pages.length === 0 && "hidden") }
+  class={cn(
+    "fixed bottom-8 top-auto inset-x-0 z-40 mx-auto w-full max-w-3xl px-4",
+    pdfState.pages.length === 0 && "hidden",
+  )}
 >
   <div
     class="flex items-center justify-around flex-wrap gap-2 rounded-2xl border border-border/60 bg-card/80 px-2 py-2 shadow-2xl backdrop-blur-xl ring-1 ring-black/5"
   >
-    <div class="flex-1 flex items-center gap-1 border-r border-border/60 pr-2 mr-1">
+    <div
+      class="flex-1 flex items-center gap-1 border-r border-border/60 pr-2 mr-1"
+    >
       <Button
-        variant="secondary"
+        variant="outline"
         class="toolbar-btn-primary"
         onclick={() => uploadArea.click()}
         title="Add PDF"
@@ -94,7 +98,9 @@
       </Button>
     </div>
 
-    <div class="flex-1 flex items-center gap-1 border-r border-border/60 pr-2 mr-1">
+    <div
+      class="flex-1 flex items-center gap-1 border-r border-border/60 pr-2 mr-1"
+    >
       <Button
         size="icon"
         variant="secondary"
@@ -115,7 +121,9 @@
       </Button>
     </div>
 
-    <div class="flex-1 flex items-center gap-1 border-r border-border/60 pr-2 mr-1">
+    <div
+      class="flex-1 flex items-center gap-1 border-r border-border/60 pr-2 mr-1"
+    >
       <Button
         size="icon"
         variant="secondary"
@@ -136,7 +144,8 @@
       </Button>
     </div>
 
-    <div class="flex-1 inline-flex items-center gap-1 border-r border-border/60 pr-2 mr-1"
+    <div
+      class="flex-1 inline-flex items-center gap-1 border-r border-border/60 pr-2 mr-1"
     >
       <Button
         size="icon"

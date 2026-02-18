@@ -105,7 +105,7 @@
         {/each}
 
         <label
-          class="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 p-2 min-w-[140px] cursor-pointer hover:bg-muted transition-colors"
+          class="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 p-2 min-w-35 cursor-pointer hover:bg-muted transition-colors"
         >
           <input
             type="file"
