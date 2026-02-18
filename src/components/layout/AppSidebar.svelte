@@ -1,18 +1,12 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import Logo from "$components/Logo.svelte";
   import Button from "$components/ui/button/button.svelte";
   import * as Sidebar from "$components/ui/sidebar";
   import { config } from "$constants/app";
   import { cn } from "$lib/utils";
   import { toolList } from "$tools/list";
-  import {
-    Chromium,
-    Command,
-    GithubIcon,
-    Moon,
-    Star,
-    Sun,
-  } from "@lucide/svelte";
+  import { Chromium, GithubIcon, Moon, Star, Sun } from "@lucide/svelte";
   import { mode, toggleMode } from "mode-watcher";
   // Derived state for reactivity
   let currentPath = $derived(page.url.pathname);
@@ -36,22 +30,7 @@
           href="/"
           class="group flex items-center gap-3 transition-opacity hover:opacity-80"
         >
-          <div
-            class="relative flex group-data-[collapsible=icon]:w-(--sidebar-width-icon) size-8! items-center justify-center rounded-lg bg-primary/10 shadow-inner ring-1 ring-primary/20 transition-all group-hover:bg-primary/20"
-          >
-            <Command class="h-4 w-4 text-primary" />
-            <div
-              class="absolute inset-0 rounded-lg bg-primary/20 blur opacity-0 transition-opacity group-hover:opacity-100"
-            ></div>
-          </div>
-          <div class="flex flex-col group-data-[state=collapsed]:hidden">
-            <span class="text-sm font-bold tracking-tight text-foreground"
-              >{config.appName}</span
-            >
-            <span class="text-[10px] font-medium text-muted-foreground"
-              >Pro Suite</span
-            >
-          </div>
+          <Logo size="md" textClassName="group-data-[state=collapsed]:hidden" />
         </a>
         <Button
           variant="ghost"
@@ -107,7 +86,7 @@
                     class={cn(
                       "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 border border-transparent",
                       isActive(`/tools/${tool.slug}`)
-                        ? "bg-background shadow-sm text-foreground border-border/50 ring-1 ring-black/5"
+                        ? "bg-dark/10 text-dark border-dark/5 ring-1 ring-dark/5"
                         : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
                       "group-data-[state=collapsed]:p-2 group-data-[state=collapsed]:size-8",
                     )}
@@ -117,7 +96,8 @@
                       <Icon size={16} />
                     {/if}
                     <span class="group-data-[state=collapsed]:hidden"
-                      >{tool.title}</span>
+                      >{tool.title}</span
+                    >
                   </a>
                 {/snippet}
               </Sidebar.MenuButton>

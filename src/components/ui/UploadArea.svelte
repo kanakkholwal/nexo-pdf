@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { cn } from "$lib/utils";
   import { UploadCloud } from "@lucide/svelte";
   import { fade } from "svelte/transition";
+  import { buttonVariants } from "./button";
   interface Props {
     accept?: string;
     multiple?: boolean;
@@ -128,10 +130,10 @@
 
 <button
   type="button"
-  class="group relative flex w-full flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+  class="group relative flex w-full flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dotted transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
   {isDragging
     ? 'border-primary bg-primary/5 scale-[1.01] ring-4 ring-primary/10'
-    : 'border-border bg-card/40 hover:border-primary/50 hover:bg-card/60'}
+    : 'border-border bg-card/75 hover:border-primary/50 hover:bg-card/90'}
   {disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
   {className}"
   ondragenter={handleDragEnter}
@@ -180,7 +182,7 @@
         {@render action()}
       {:else}
         <div
-          class="rounded-full bg-primary/10 px-8 py-3 text-sm font-semibold text-primary shadow-xs transition-transform duration-300 hover:bg-primary/10 hover:scale-105 active:scale-95"
+          class={cn(buttonVariants({ variant: "dark" }))}
         >
           Select Files
         </div>

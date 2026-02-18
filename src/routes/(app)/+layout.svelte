@@ -6,7 +6,7 @@
 </script>
 
 <Sidebar.Provider
-  class="flex h-screen w-full flex-col bg-background text-foreground md:flex-row overflow-hidden"
+  class="flex h-screen w-full flex-col md:flex-row overflow-hidden"
 >
   <AppSidebar />
   <main

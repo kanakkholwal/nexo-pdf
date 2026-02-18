@@ -49,8 +49,8 @@
 </svelte:head>
 
 {#if tool}
-  <div class="min-h-screen w-full bg-background text-foreground" in:fade>
-    <div class="mx-auto max-w-app px-4 pb-20 sm:px-6 lg:px-8">
+  <div class="min-h-screen w-full" in:fade>
+    <div class="px-4 pb-20 sm:px-6 lg:px-8">
       <nav class="mb-8 flex items-center justify-between">
         <a
           href="/explore"
@@ -77,7 +77,9 @@
       </nav>
 
       <div class="flex w-full min-w-0 flex-col gap-8">
-        <AdUnit adSlot="display-horizontal" />
+        {#key tool.slug}
+          <AdUnit adSlot="display-horizontal" />
+        {/key}
 
         <header
           class="flex flex-col items-start gap-8 px-2 sm:flex-row sm:items-center"
@@ -162,7 +164,9 @@
             >
             <div class="h-px flex-1 bg-border"></div>
           </div>
-          <AdUnit adSlot="multiplex_horizontal" />
+          {#key tool.slug}
+            <AdUnit adSlot="multiplex_horizontal" />
+          {/key}
         </div>
 
         <div class="py-10 text-center">

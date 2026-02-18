@@ -1,12 +1,16 @@
 import {
+    Bookmark,
     CropIcon,
+    Edit3Icon,
     FileStack,
     FileText,
+    Highlighter,
     ImageIcon,
     Lock,
     MoveIcon,
     RotateCw,
     Scissors,
+    Text,
     Unlock,
     Zap,
     type Icon
@@ -143,7 +147,7 @@ const tools: Record<string, ToolConfig> = {
         title: "Edit PDF",
         description: "Edit PDF content directly. Add text, images, and annotations.",
         category: 'pdf-management',
-        icon: FileText,
+        icon: Edit3Icon,
         component: () => import('./edit-pdf/tool.svelte'),
         color: 'text-blue-500'
     },
@@ -152,7 +156,7 @@ const tools: Record<string, ToolConfig> = {
         title: "Bookmark PDF",
         description: "Add, edit, and manage bookmarks in your PDF for easy navigation.",
         category: 'pdf-management',
-        icon: FileText,
+        icon: Bookmark,
         component: () => import('./bookmark-pdf/tool.svelte'),
         color: 'text-blue-500'
     },
@@ -170,7 +174,7 @@ const tools: Record<string, ToolConfig> = {
         title: "Add Page Numbers",
         description: "Easily add page numbers to your PDF for better readability.",
         category: 'pdf-management',
-        icon: FileText,
+        icon: Text,
         component: () => import('./add-page-no-pdf/tool.svelte'),
         color: 'text-blue-500'
     },
@@ -179,7 +183,7 @@ const tools: Record<string, ToolConfig> = {
         title: "Add Watermark",
         description: "Protect your PDF by adding a custom watermark to your pages.",
         category: 'pdf-management',
-        icon: FileText,
+        icon: Highlighter,
         component: () => import('./add-watermark-pdf/tool.svelte'),
         color: 'text-blue-500'
     }

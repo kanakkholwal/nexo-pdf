@@ -6,7 +6,7 @@
 
 :root,
 [data-theme="light"] {
-  --background: hsl(0deg 0% 96.08%);
+  --background: hsl(40, 30%, 96%);
   --foreground: hsl(0deg 0% 9.8%);
 
   --card: hsl(0, 0%, 100%);
@@ -52,14 +52,14 @@
   --input: hsl(220 13% 91%);
   --input: oklch(.922 0 0);
 
-  --dark: hsl(222.33deg 49.39% 11.3%);
+  --dark: hsl(0deg 1.79% 21.96%);
   --dark-foreground: hsl(0deg 0% 92.16%);
   --ring: var(--primary, hsl(262.1 83.3% 57.8%));
   --radius: 0.75rem;
   --max-app-width: clamp(1280px, 80vw, 1920px);
 
 
-  --sidebar: var(--card);
+  --sidebar: hsl(0deg 0% 96.86%);
   --sidebar-background: var(--card);
   --sidebar-foreground: var(--card-foreground);
   --sidebar-primary: var(--primary);
@@ -68,6 +68,8 @@
   --sidebar-accent-foreground: var(--muted-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+
+  --noise-bg:url(/light-noise.svg),linear-gradient(hsl(40, 30%, 96%),hsl(40, 30%, 96%));
 
   --text-primary: hsl(0deg 0% 96.08%);
   --text-secondary: hsl(0deg 0% 9.8%);
@@ -144,6 +146,7 @@
   --accent-foreground: hsl(0, 0%, 61%);
   --destructive: hsl(0 62.8% 30.6%);
   --destructive-foreground: hsl(0deg 0% 92.16%);
+  --noise-bg:url(/dark-noise.png),linear-gradient(#393737,#1b1b1b);
 
 
   /* proposed */
@@ -183,7 +186,7 @@
   --chart-14: hsl(333.3 71.4% 50.6%);
   --chart-15: hsl(346.8 77.2% 49.8%);
 
-  --sidebar: var(--background);
+  --sidebar: hsl(0, 0%, 7%);
   --sidebar-background: var(--card);
   --sidebar-foreground: var(--card-foreground);
   --sidebar-primary: var(--primary);
@@ -582,8 +585,8 @@ body {
        - starts from 1024px (for tablets/small desktops)
        - scales with viewport
        - grows reasonably beyond 1440px without a hard limit */
-  @apply bg-background text-foreground selection:bg-primary/75 selection:text-white selection:rounded-2xl;
-
+  @apply text-foreground selection:bg-primary/75 selection:text-white selection:rounded-2xl;
+  background: var(--noise-bg);
 }
 
 /* Custom Grid Background Utility */

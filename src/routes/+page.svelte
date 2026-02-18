@@ -1,9 +1,12 @@
 <script lang="ts">
   import Footer from "$components/common/footer.svelte";
   import Navbar from "$components/common/navbar.svelte";
+  import { Button } from "$components/ui/button";
+  import { config } from "$constants/app";
   import { toolList } from "$tools/list";
   import {
     ArrowRight,
+    ArrowUpRight,
     Check,
     Cpu,
     Github,
@@ -35,26 +38,19 @@
   ];
 </script>
 
-<div class="relative flex min-h-screen w-full flex-col bg-background text-foreground antialiased selection:bg-primary/20">
+<div class="relative flex min-h-screen w-full flex-col">
   <Navbar />
 
-  <div class="fixed inset-0 -z-10 h-full w-full overflow-hidden bg-background">
-    <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]"></div>
-    
-    <div class="absolute left-0 top-0 -z-10 size-125 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[100px] opacity-50 dark:opacity-20"></div>
-    <div class="absolute right-0 top-0 -z-10 size-125 translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/20 blur-[100px] opacity-50 dark:opacity-20"></div>
-    <div class="absolute bottom-0 left-1/2 -z-10 size-200 -translate-x-1/2 translate-y-1/2 rounded-full bg-purple-500/10 blur-[120px] opacity-50 dark:opacity-20"></div>
-  </div>
 
   <main class="flex-1">
     <section class="relative pt-24 pb-20 md:pt-32 lg:pt-40">
       <div class="container mx-auto max-w-5xl px-4 text-center">
         
         <div class="mb-8 inline-flex items-center justify-center">
-          <a href="https://github.com/kanakkholwal/nexopdf" target="_blank" class="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-border/50 bg-card/50 px-4 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-md transition-colors hover:bg-muted/50 hover:text-foreground">
-            <span class="flex h-2 w-2 rounded-full bg-primary shadow-lg"></span>
-            <span class="relative">v2.0 is now Open Source</span>
-            <ArrowRight class="ml-1 size-3 transition-transform group-hover:translate-x-0.5" />
+          <a href={config.github} target="_blank" class="group relative inline-flex items-center gap-2 overflow-hidden rounded-full border border-border/80 bg-card/75 px-4 py-1.5 text-sm font-medium text-muted-foreground backdrop-blur-md transition-colors hover:bg-muted/50 hover:text-foreground">
+            <Github class="size-3" />
+            <span class="relative">Open Source</span>
+            <ArrowUpRight class="ml-1 size-3 transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
 
@@ -71,24 +67,26 @@
         </p>
 
         <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <a
+          <Button
             href="/explore"
-            class="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-8 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/20 ring-offset-background transition-all hover:scale-[1.02] hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            class="h-12 px-8! shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
           >
             Start Processing
             <ArrowRight class="ml-2 size-4" />
-          </a>
-          <a
-            href="https://github.com/kanakkholwal/nexopdf"
+          </Button>
+          <Button
+            href={config.github}
             target="_blank"
-            class="inline-flex h-12 items-center justify-center rounded-xl border border-border bg-background/60 backdrop-blur-sm px-8 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            variant="dark"
+            size="lg"
+            class="h-12 px-8!"
           >
             <Github class="mr-2 size-4" />
             Star on GitHub
-          </a>
+          </Button>
         </div>
 
-        <div class="mt-20 grid grid-cols-2 gap-8 border-y border-border/50 bg-background/30 py-8 backdrop-blur-sm md:grid-cols-4 lg:rounded-2xl lg:border lg:bg-card/30 lg:shadow-sm">
+        <div class="mt-20 grid grid-cols-2 gap-8 border-y border-border bg-card/75 py-8 backdrop-blur-sm md:grid-cols-4 lg:rounded-2xl lg:shadow-xs">
           <div class="space-y-1">
             <h3 class="text-3xl font-bold tracking-tight text-foreground">1M+</h3>
             <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Files Processed</p>

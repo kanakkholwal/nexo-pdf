@@ -1,6 +1,7 @@
 <script lang="ts">
   import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
+  import Input from "$components/ui/input/input.svelte";
   import { toolsCategories } from "$constants/tools";
   import { cn } from "$lib/utils";
   import { ArrowRight, Search, Sparkles } from "@lucide/svelte";
@@ -28,7 +29,7 @@
       })
       .filter(Boolean),
   );
-    
+
   function updateCategory(category: string) {
     const url = new URL(page.url);
     if (category === "all") {
@@ -42,12 +43,7 @@
       scroll: false,
     });
   }
-  $effect(() => {
-    updateCategory(activeCategory);
-  });
-  $effect(() => {
-    handleSearchInput(searchQuery);
-  });
+
   function handleSearchInput(searchQuery: string) {
     const url = new URL(page.url);
     if (searchQuery) {
@@ -59,10 +55,17 @@
       scroll: false,
     });
   }
-
+  $effect(() => {
+    updateCategory(activeCategory);
+  });
+  $effect(() => {
+    handleSearchInput(searchQuery);
+  });
 </script>
 
-<main class="relative z-10 container mx-auto px-4 py-24 md:py-32 pt-10! max-w-app">
+<main
+  class="relative z-10 container mx-auto px-4 py-24 md:py-32 pt-10! max-w-app @container"
+>
   <div
     class="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-16"
   >
@@ -78,7 +81,7 @@
       >
         Everything you need <br />
         <span
-          class="text-transparent bg-clip-text bg-linear-to-r from-primary to-indigo-600"
+          class="text-transparent bg-clip-text bg-linear-to-r from-primary to-sky-600"
           >to master PDFs.</span
         >
       </h1>
@@ -87,17 +90,17 @@
       </p>
     </div>
 
-    <div class="w-full md:w-auto relative group flex items-center">
+    <div class="w-full md:w-auto relative group flex items-center mt-auto">
       <Search
         size={18}
         class="size-7 my-auto text-primary absolute z-5 inset-y-0 left-0 pl-3 pointer-events-none group-focus-within:text-primary transition-colors"
       />
-      <input
+      <Input
         type="search"
         name="explore-search"
         bind:value={searchQuery}
         placeholder="Search tools (e.g. 'Merge')..."
-        class="w-full md:w-80 rounded-xl border border-border/60 bg-card/60 pl-10 pr-4 py-3 text-sm font-medium shadow-sm backdrop-blur-md outline-none focus:ring-2 focus:ring-primary/20 focus:border-blue-400 transition-all placeholder:text-muted-foreground"
+        class="w-full md:w-80 rounded-xl pl-10 pr-4 py-3 text-sm font-medium shadow-sm backdrop-blur-md outline-none bg-card"
       />
     </div>
   </div>
@@ -168,7 +171,7 @@
         </div>
 
         <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+          class="grid grid-cols-1 @sm:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4 gap-5"
         >
           {#each category?.tools as tool}
             <a
@@ -176,7 +179,7 @@
               class="group relative flex flex-col p-5 h-full rounded-2xl border border-border bg-card backdrop-blur-md shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-card hover:shadow-xl hover:shadow-blue-900/5 hover:border-primary/20"
             >
               <div
-                class={`h-12 w-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${tool.color}`}
+                class={`size-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${tool.color}`}
               >
                 {#if tool.icon}
                   {@const Icon = tool.icon}

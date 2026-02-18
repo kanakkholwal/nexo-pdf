@@ -92,7 +92,7 @@
 		<div class="flex flex-wrap items-center gap-2">
 			{#each socials as social}
 				<Button
-					variant="secondary"
+					variant="outline"
 					size="icon"
 					href={social.url}
 					target="_blank"

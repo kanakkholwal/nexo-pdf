@@ -1,22 +1,15 @@
 <script lang="ts">
+  import Logo from "$components/Logo.svelte";
   import Button from "$components/ui/button/button.svelte";
   import { config } from "$constants/app";
   import { cn } from "$lib/utils";
-  import {
-    ChevronRight,
-    FileText,
-    Menu,
-    Moon,
-    Sun,
-    X
-  } from "@lucide/svelte";
+  import { ChevronRight, Menu, Moon, Sun, X } from "@lucide/svelte";
   import { mode, toggleMode } from "mode-watcher";
   import { cubicOut } from "svelte/easing";
   import { slide } from "svelte/transition";
 
   let isMobileOpen = false;
   let scrollY = 0;
-
 
   const navLinks = [
     { name: "Explore", href: "/explore" },
@@ -29,22 +22,13 @@
 <header class="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
   <div
     class={cn(
-      "relative w-full max-w-2xl border border-border/40 bg-card/60 backdrop-blur-xl backdrop-saturate-150 transition-all duration-300 overflow-hidden",
+      "relative w-full max-w-2xl border border-border/40 bg-card/80 backdrop-blur-2xl shadow-xs backdrop-saturate-150 transition-all duration-300 overflow-hidden",
       isMobileOpen ? "px-4 py-3 rounded-lg" : "px-2 py-2 rounded-full",
     )}
-    class:shadow-lg={scrollY > 20}
-    class:shadow-sm={scrollY <= 20}
   >
-    <div class="flex h-12 items-center justify-between px-2 pr-2 sm:px-4">
-      <a href="/" class="flex items-center gap-2 pl-2 group">
-        <div
-          class="flex size-8 items-center justify-center rounded-xl bg-linear-to-br from-primary/20 to-primary/10 text-primary shadow-inner border border-white/10 dark:border-white/5 transition-transform group-hover:scale-105"
-        >
-          <FileText size={18} />
-        </div>
-        <span class="text-sm font-semibold tracking-tight text-foreground/90">
-          Nexo PDF
-        </span>
+    <div class="flex h-10 items-center justify-between px-2 pr-2 sm:px-4">
+      <a href="/" class="flex items-center gap-2 group">
+        <Logo />
       </a>
 
       <nav
