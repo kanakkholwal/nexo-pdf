@@ -69,7 +69,7 @@
         <div class="inline-flex gap-2 items-center flex-wrap">
           <Button variant="dark" size="sm" href={config.github} target="_blank">
             <Github class="size-3.5" />
-            Star on Github
+            <span class="hidden md:inline-block">Star on Github</span>
           </Button>
           <ShareButton
             data={{
