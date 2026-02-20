@@ -121,7 +121,7 @@
           {#each displayTools as tool}
             <a
               href={`/tools/${tool.slug}`}
-              class="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/50 p-6 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/20 hover:bg-card hover:shadow-md"
+              class="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/75 p-6 shadow-xs backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-primary/20 hover:bg-card hover:shadow-md"
             >
               <div class="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"></div>
 
