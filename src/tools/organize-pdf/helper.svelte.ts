@@ -1,6 +1,7 @@
 import { PdfEngine } from '$lib/pdf-engine.svelte';
 import { PDFDocument } from 'pdf-lib';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { toast } from 'svelte-sonner';
 
 export interface PageItem {
     id: string; // Unique ID for UI keys
@@ -26,10 +27,8 @@ export class OrganizePdfState extends PdfEngine {
 
     async loadFile(file: File) {
         if (!file) return;
-        this.isProcessing = true;
-        this.progress = { text: 'Loading PDF...', current: 0, total: 0 };
 
-        try {
+        await this.handleProcess(async () => {
             const arrayBuffer = await file.arrayBuffer();
 
             // Load both engines
@@ -49,13 +48,11 @@ export class OrganizePdfState extends PdfEngine {
                 originalIndex: i,
                 pageNumber: i + 1
             }));
-
-        } catch (e) {
-            console.error(e);
-            alert("Failed to load PDF.");
-        } finally {
-            this.isProcessing = false;
-        }
+        }, {
+            loading: 'Loading PDF...',
+            success: 'PDF loaded successfully!',
+            error: 'Failed to load PDF.'
+        });
     }
 
     reset() {
@@ -77,7 +74,7 @@ export class OrganizePdfState extends PdfEngine {
 
     deletePage(id: string) {
         if (this.state.pages.length <= 1) {
-            alert("You cannot delete the last page.");
+            toast.error("You cannot delete the last page.");
             return;
         }
         this.state.pages = this.state.pages.filter(p => p.id !== id);
@@ -105,7 +102,7 @@ export class OrganizePdfState extends PdfEngine {
             .filter(n => !isNaN(n) && n >= 0 && n < (this.pdfJsDoc?.numPages || 0));
 
         if (indices.length === 0) {
-            alert("Invalid page numbers provided.");
+            toast.error("Invalid page numbers provided.");
             return;
         }
 
@@ -129,17 +126,15 @@ export class OrganizePdfState extends PdfEngine {
 
     async save() {
         if (!this.state.file || !this.pdfLibDoc) return;
-        this.isProcessing = true;
-        this.progress = { text: 'Building PDF...', current: 0, total: 0 };
 
-        try {
+        await this.handleProcess(async () => {
             const newPdf = await PDFDocument.create();
 
             // Get indices needed
             const indicesToCopy = this.state.pages.map(p => p.originalIndex);
 
             // Copy pages from source
-            const copiedPages = await newPdf.copyPages(this.pdfLibDoc, indicesToCopy);
+            const copiedPages = await newPdf.copyPages(this.pdfLibDoc!, indicesToCopy);
 
             // Add them to new doc
             copiedPages.forEach(page => newPdf.addPage(page));
@@ -147,15 +142,14 @@ export class OrganizePdfState extends PdfEngine {
             const pdfBytes = await newPdf.save();
             const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
 
-            const originalName = this.state.file.name.replace('.pdf', '');
+            const originalName = this.state.file!.name.replace('.pdf', '');
             this.downloadBlob(blob, `${originalName}_organized.pdf`);
-
-        } catch (e: any) {
-            console.error(e);
-            alert(`Save failed: ${e.message}`);
-        } finally {
-            this.isProcessing = false;
-        }
+        }, {
+            loading: 'Building PDF...',
+            success: 'PDF organized successfully!',
+            error: (e) => `Save failed: ${e.message}`
+        });
     }
+
 
 }

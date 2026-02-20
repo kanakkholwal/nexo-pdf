@@ -51,15 +51,13 @@ export class AddWatermarkState extends PdfEngine {
 
     async process() {
         if (!this.state.file) return;
-        this.isProcessing = true;
-        this.progress = { text: 'Applying Watermark...', current: 0, total: 0 };
 
-        try {
-            const arrayBuffer = await this.state.file.arrayBuffer();
+        await this.handleProcess(async () => {
+            const arrayBuffer = await this.state.file!.arrayBuffer();
             const pdfDoc = await PDFDocument.load(arrayBuffer);
 
             const pages = pdfDoc.getPages();
-            const { width, height } = pages[0].getSize(); // Assume consistent size for centering logic base, or iter per page
+            // const { width, height } = pages[0].getSize(); // Assume consistent size for centering logic base, or iter per page
 
             // Prepare Common Resources
             let embedImage: any = null;
@@ -128,14 +126,13 @@ export class AddWatermarkState extends PdfEngine {
             const pdfBytes = await pdfDoc.save();
             const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
 
-            const originalName = this.state.file.name.replace('.pdf', '');
+            const originalName = this.state.file!.name.replace('.pdf', '');
             this.downloadBlob(blob, `${originalName}_watermarked.pdf`);
-
-        } catch (e: any) {
-            console.error(e);
-            alert(`Error: ${e.message}`);
-        } finally {
-            this.isProcessing = false;
-        }
+        }, {
+            loading: 'Applying watermark...',
+            success: 'Watermark applied successfully!',
+            error: 'Failed to apply watermark.'
+        });
     }
 }
+

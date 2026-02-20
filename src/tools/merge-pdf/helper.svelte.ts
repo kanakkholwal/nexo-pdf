@@ -38,17 +38,13 @@ export class MergeState extends PdfEngine {
     // --- Actions ---
 
     async addFiles(newFiles: File[]) {
-        if (this.isProcessing) return;
-        this.isProcessing = true;
-        this.progress = { current: 0, total: newFiles.length, text: 'Analyzing PDFs...' };
+        if (!newFiles.length) return;
 
-        try {
+        await this.handleProcess(async () => {
             const pdfjs = await this.getPdfJs();
 
             for (let i = 0; i < newFiles.length; i++) {
                 const file = newFiles[i];
-                this.progress = { current: i + 1, total: newFiles.length, text: `Loading ${file.name}...` };
-
                 const arrayBuffer = await file.arrayBuffer();
 
                 // 1. Load for Rendering (PDF.js)
@@ -85,12 +81,11 @@ export class MergeState extends PdfEngine {
                     });
                 }
             }
-        } catch (error) {
-            console.error(error);
-            alert("Failed to load one or more PDF files.");
-        } finally {
-            this.isProcessing = false;
-        }
+        }, {
+            loading: 'Analyzing PDFs...',
+            success: 'Files loaded successfully!',
+            error: 'Failed to load one or more PDF files.'
+        });
     }
 
     removeFile(fileId: string) {
@@ -101,18 +96,8 @@ export class MergeState extends PdfEngine {
     }
 
     updateFileOrder(newIndices: number[]) {
-        // Reorder files array based on SortableJS indices
-        // This is a simple reorder, but we must also re-generate `allPages` 
-        // to match the new file order if the user switches to Page Mode later.
-        // However, if the user has already messed with Page Mode, we shouldn't overwrite it.
-        // For simplicity in this tool: File Mode order dominates initial Page Mode order.
-
-        // In Svelte 5, direct assignment triggers updates
         const reordered = newIndices.map(i => this.files[i]);
         this.files = reordered;
-
-        // Optional: Re-sort pages based on new file order? 
-        // Usually better to leave pages alone if they've been manually sorted.
     }
 
     // --- Rendering for Thumbnails ---
@@ -127,10 +112,8 @@ export class MergeState extends PdfEngine {
 
     async mergeAndDownload() {
         if (this.files.length === 0) return;
-        this.isProcessing = true;
-        this.progress = { current: 0, total: 100, text: 'Merging PDFs...' };
 
-        try {
+        await this.handleProcess(async () => {
             const mergedPdf = await PDFDocument.create();
 
             if (this.mode === 'file') {
@@ -172,14 +155,13 @@ export class MergeState extends PdfEngine {
             const pdfBytes = await mergedPdf.save();
             const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
             this.downloadBlob(blob, `merged_${new Date().getTime()}.pdf`);
-
-        } catch (e) {
-            console.error(e);
-            alert("Error merging PDFs. Please check console.");
-        } finally {
-            this.isProcessing = false;
-        }
+        }, {
+            loading: 'Merging PDFs...',
+            success: 'PDFs merged successfully!',
+            error: 'Error merging PDFs. Please check console.'
+        });
     }
+
 
 
     reset() {

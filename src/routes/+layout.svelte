@@ -69,7 +69,7 @@
 {/if}
 
 <ModeWatcher />
-<Toaster />
+<Toaster position="top-right" richColors />
 
 <div class="relative flex min-h-screen w-full flex-col">
   {@render children()}

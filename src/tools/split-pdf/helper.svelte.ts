@@ -26,11 +26,9 @@ export class SplitState extends PdfEngine {
 
 
   async loadFile(newFile: File) {
-    if (this.isProcessing) return;
-    this.isProcessing = true;
-    this.progress = { text: 'Loading PDF...', current: 10, total: 100 };
+    if (!newFile) return;
 
-    try {
+    await this.handleProcess(async () => {
       const arrayBuffer = await newFile.arrayBuffer();
 
       // 1. Load pdf-lib (for splitting)
@@ -46,13 +44,11 @@ export class SplitState extends PdfEngine {
       this.fileName = newFile.name;
       this.selectedPages.clear();
       this.rangeInput = '';
-
-    } catch (error) {
-      console.error(error);
-      alert("Failed to load PDF. It might be password protected or corrupted.");
-    } finally {
-      this.isProcessing = false;
-    }
+    }, {
+      loading: 'Loading PDF...',
+      success: 'PDF loaded successfully!',
+      error: 'Failed to load PDF. It might be password protected or corrupted.'
+    });
   }
 
   async renderThumbnail(canvas: HTMLCanvasElement, pageIndex: number) {
@@ -73,10 +69,8 @@ export class SplitState extends PdfEngine {
 
   async processSplit() {
     if (!this.pdfDoc || !this.file) return;
-    this.isProcessing = true;
-    this.progress = { text: 'Splitting...', current: 0, total: 100 };
 
-    try {
+    await this.handleProcess(async () => {
       if (this.mode === 'range') {
         await this.splitByRange();
       } else if (this.mode === 'visual' || this.mode === 'extract') {
@@ -84,14 +78,13 @@ export class SplitState extends PdfEngine {
       } else if (this.mode === 'n-times') {
         await this.splitNTimes();
       }
-      // Add 'bookmarks' logic if needed later (requires complex parsing)
-    } catch (e: any) {
-      console.error(e);
-      alert(e.message || "Error splitting PDF");
-    } finally {
-      this.isProcessing = false;
-    }
+    }, {
+      loading: 'Splitting PDF...',
+      success: 'PDF split successfully!',
+      error: 'Error splitting PDF'
+    });
   }
+
 
   private async splitByRange() {
     const indices = this.parsePageRange(this.rangeInput, this.pageCount);

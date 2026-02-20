@@ -59,11 +59,9 @@ export class PageNumberState extends PdfEngine {
 
     async process() {
         if (!this.state.file) return;
-        this.isProcessing = true;
-        this.progress = { text: 'Adding Page Numbers...', current: 0, total: 0 };
 
-        try {
-            const arrayBuffer = await this.state.file.arrayBuffer();
+        await this.handleProcess(async () => {
+            const arrayBuffer = await this.state.file!.arrayBuffer();
             const pdfDoc = await PDFDocument.load(arrayBuffer);
             const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
@@ -126,14 +124,13 @@ export class PageNumberState extends PdfEngine {
             const pdfBytes = await pdfDoc.save();
             const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
 
-            const originalName = this.state.file.name.replace('.pdf', '');
+            const originalName = this.state.file!.name.replace('.pdf', '');
             this.downloadBlob(blob, `${originalName}_numbered.pdf`);
-
-        } catch (e: any) {
-            console.error(e);
-            alert(`Error: ${e.message}`);
-        } finally {
-            this.isProcessing = false;
-        }
+        }, {
+            loading: 'Adding page numbers...',
+            success: 'PDF numbered successfully!',
+            error: 'Failed to add page numbers.'
+        });
     }
 }
+
