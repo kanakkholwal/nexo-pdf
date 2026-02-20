@@ -2,11 +2,11 @@
   import { dev } from "$app/environment";
   import { page } from "$app/state";
   import { config } from "$constants/app";
-  
+
   export let title = config.appName;
   export let description = config.appDescription;
   export let image = "";
-  export let isBase = false
+  export let isBase = false;
 
   let canonicalUrl = dev
     ? `http://localhost:3000/${page.url.pathname.toString()}`
@@ -21,18 +21,23 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <meta property="og:image" content={image} />
 
   <meta name="twitter:card" content="summary_large_image" />
   <meta property="twitter:domain" content={config.appDomain} />
   <meta property="twitter:url" content={canonicalUrl} />
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content={image} />
+
   {@html `  <script type="application/ld+json">{
    "@context": "https://schema.org",
    "@type": "Website",
    "name": "${title} | ${config.appName}",
    "url": "${canonicalUrl}"",
-   "logo": ${image}  }</script>`}
+   ${image ? `"logo": "${image}",` : ''}
+  }</script>`}
+
+  {#if image}
+    <meta name="twitter:image" content={image} />
+    <meta property="og:image" content={image} />
+  {/if}
 </svelte:head>

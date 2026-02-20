@@ -136,7 +136,7 @@ export class MergeState extends PdfEngine {
                 }
 
             } else {
-                // --- PAGE MODE MERGE ---
+                
                 // We iterate the `allPages` array which reflects the user's custom sort order
                 const fileCache = new Map<string, PDFDocument>();
                 // Pre-fill cache
