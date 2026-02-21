@@ -5,7 +5,7 @@ import {
 } from '$env/static/public';
 
 export const config = {
-    appName: 'Nexo PDF',
+    appName: 'NexoNauts PDF',
     appVersion: '0.1.0',
     appDescription: `The privacy-first PDF toolkit for professionals. Process documents
           locally via WebAssembly without them ever touching a server.`,
