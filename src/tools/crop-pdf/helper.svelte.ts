@@ -14,10 +14,8 @@ export interface CropStateData {
     pageCount: number;
     currentPage: number; // 1-based index
     pageCrops: Record<number, CropData>; // Map pageNum -> CropData
-    isProcessing: boolean;
     isDestructive: boolean;
     applyToAll: boolean;
-    progress: string;
 }
 
 export class CropPdfState extends PdfEngine {
@@ -26,10 +24,8 @@ export class CropPdfState extends PdfEngine {
         pageCount: 0,
         currentPage: 1,
         pageCrops: {},
-        isProcessing: false,
         isDestructive: false,
         applyToAll: false,
-        progress: ''
     });
 
     private pdfJsDoc: PDFDocumentProxy | null = null;
@@ -39,9 +35,8 @@ export class CropPdfState extends PdfEngine {
 
     async loadFile(file: File) {
         if (!file) return;
-        this.state.isProcessing = true;
-        this.state.progress = 'Loading PDF...';
-
+        this.progress = { text: 'Loading PDF...',current: 0, total: 0 };
+        
         try {
             this.fileBuffer = await file.arrayBuffer();
             const pdfjs = await this.getPdfJs();
@@ -58,7 +53,7 @@ export class CropPdfState extends PdfEngine {
             console.error(e);
             alert("Failed to load PDF.");
         } finally {
-            this.state.isProcessing = false;
+            this.isProcessing = false;
         }
     }
 
@@ -113,9 +108,9 @@ export class CropPdfState extends PdfEngine {
             return;
         }
 
-        this.state.isProcessing = true;
-        this.state.progress = 'Applying Crop...';
-
+        this.isProcessing = true;
+        this.progress = { text: 'Applying Crop...', current: 0, total: 0 };
+        
         try {
             let pdfBytes: Uint8Array;
             if (this.state.isDestructive) {
@@ -126,13 +121,13 @@ export class CropPdfState extends PdfEngine {
 
             const prefix = this.state.isDestructive ? 'flattened' : 'cropped';
             const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
-            this.downloadFile(blob, `${prefix}_${this.state.file.name}`);
+            this.downloadBlob(blob, `${prefix}_${this.state.file.name}`);
 
         } catch (e: any) {
             console.error(e);
             alert(`Crop failed: ${e.message}`);
         } finally {
-            this.state.isProcessing = false;
+            this.isProcessing = false;
         }
     }
 
@@ -185,7 +180,7 @@ export class CropPdfState extends PdfEngine {
         const sourcePdf = await PDFDocument.load(this.fileBuffer!, { ignoreEncryption: true });
         
         for (let i = 1; i <= this.state.pageCount; i++) {
-            this.state.progress = `Processing Page ${i}...`;
+            this.progress = { text: `Processing Page ${i}...`, current: i, total: this.state.pageCount };
             
             if (crops[i]) {
                 const crop = crops[i];
@@ -239,13 +234,5 @@ export class CropPdfState extends PdfEngine {
         return newPdf.save();
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
+
 }

@@ -1,3 +1,4 @@
+import { BaseEngine } from "$lib/base-engine.svelte";
 
 export interface TocStateData {
     file: File | null;
@@ -5,19 +6,16 @@ export interface TocStateData {
     fontSize: string;
     fontFamily: string;
     addBookmark: boolean;
-    isProcessing: boolean;
-    progress: string;
+
 }
 
-export class TableOfContentsState {
+export class TableOfContentsState extends BaseEngine {
     state = $state<TocStateData>({
         file: null,
         title: 'Table of Contents',
         fontSize: '12',
         fontFamily: '4', 
         addBookmark: true,
-        isProcessing: false,
-        progress: ''
     });
 
     private worker: Worker | null = null;
@@ -29,7 +27,7 @@ export class TableOfContentsState {
 
     reset() {
         this.state.file = null;
-        this.state.isProcessing = false;
+        this.isProcessing = false;
         if (this.worker) {
             this.worker.terminate();
             this.worker = null;
@@ -39,14 +37,14 @@ export class TableOfContentsState {
     async generateTOC() {
         if (!this.state.file) return;
         
-        this.state.isProcessing = true;
-        this.state.progress = 'Initializing...';
+        this.isProcessing = true;
+        this.progress = { current: 0, total: 0, text: 'Initializing...' };
 
         try {
             if (!this.worker) {
                 // 1. Fetch the library code in the Main Thread
                 // This bypasses Worker restrictions and CORS issues often encountered inside workers
-                this.state.progress = 'Downloading Library...';
+                this.progress = { current: 0, total: 0, text: 'Downloading Library...' };
                 const libUrl = await this.fetchLibraryUrl();
                 
                 // 2. Create the worker with the local Blob URL
@@ -57,7 +55,7 @@ export class TableOfContentsState {
 
             const arrayBuffer = await this.state.file.arrayBuffer();
 
-            this.state.progress = 'Generating Table of Contents...';
+            this.progress = { current: 0, total: 0, text: 'Generating Table of Contents...' };
             
             const message = {
                 command: 'generate-toc',
@@ -73,7 +71,7 @@ export class TableOfContentsState {
         } catch (e: any) {
             console.error(e);
             alert(`Error: ${e.message}`);
-            this.state.isProcessing = false;
+            this.isProcessing = false;
         }
     }
 
@@ -162,35 +160,27 @@ export class TableOfContentsState {
 
     private handleWorkerMessage(e: MessageEvent) {
         if (e.data.status === 'success') {
-            this.state.progress = 'Downloading...';
+            this.progress = { current: 0, total: 0, text: 'Downloading...' };
             
             const pdfBytes = new Uint8Array(e.data.pdfBytes);
             const blob = new Blob([pdfBytes], { type: 'application/pdf' });
             const name = this.state.file?.name.replace('.pdf', '_toc.pdf') || 'document_toc.pdf';
             
-            this.downloadFile(blob, name);
-            this.state.isProcessing = false;
+            this.downloadBlob(blob, name);
+            this.isProcessing = false;
             
         } else if (e.data.status === 'error') {
             console.error("Worker Error:", e.data.message);
             alert(`Generation Failed: ${e.data.message}`);
-            this.state.isProcessing = false;
+            this.isProcessing = false;
         }
     }
 
     private handleWorkerError(e: ErrorEvent) {
         console.error("Worker System Error:", e);
         // Don't alert here immediately as the explicit error message usually follows
-        this.state.isProcessing = false;
+        this.isProcessing = false;
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
+
 }

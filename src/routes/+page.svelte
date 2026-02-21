@@ -76,7 +76,7 @@
           </Button>
           <Button
             href={config.github}
-            target="_blank"
+            target="_blank" rel="noopener noreferrer"
             variant="dark"
             size="lg"
             class="h-12 px-8!"

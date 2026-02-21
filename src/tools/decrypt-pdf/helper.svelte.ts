@@ -1,4 +1,5 @@
 
+import { BaseEngine } from '$lib/base-engine.svelte';
 import { initializeQpdf } from '$utils/helper';
 
 export interface DecryptState {
@@ -8,7 +9,7 @@ export interface DecryptState {
     progress: string;
 }
 
-export class DecryptPdfState {
+export class DecryptPdfState extends BaseEngine {
     // Reactive State
     state = $state<DecryptState>({
         file: null,
@@ -88,7 +89,7 @@ export class DecryptPdfState {
                 }
                 
                 const blob = new Blob([outputFile], { type: 'application/pdf' });
-                this.downloadFile(blob, `unlocked_${this.state.file.name}`);
+                this.downloadBlob(blob, `unlocked_${this.state.file.name}`);
             } catch (readError) {
                 // If readFile fails, it means QPDF didn't write the output (likely invalid password)
                 throw new Error("Incorrect Password or Decryption Failed.");
@@ -108,13 +109,4 @@ export class DecryptPdfState {
         }
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
 }

@@ -35,13 +35,13 @@ export class RotatePdfState extends PdfEngine {
         try {
             const arrayBuffer = await file.arrayBuffer();
             const pdfjs = await this.getPdfJs();
-            
+
             const loadingTask = pdfjs.getDocument(new Uint8Array(arrayBuffer));
             this.pdfJsDoc = await loadingTask.promise;
-            
+
             this.state.file = file;
             this.state.pageCount = this.pdfJsDoc.numPages;
-            
+
             this.state.pages = Array.from({ length: this.pdfJsDoc.numPages }, (_, i) => ({
                 pageIndex: i,
                 rotation: 0
@@ -89,7 +89,7 @@ export class RotatePdfState extends PdfEngine {
             const arrayBuffer = await this.state.file.arrayBuffer();
             const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
             const pages = pdfDoc.getPages();
-            
+
             this.state.pages.forEach((p, i) => {
                 const page = pages[i];
                 const currentRotation = page.getRotation().angle;
@@ -98,9 +98,9 @@ export class RotatePdfState extends PdfEngine {
 
             const pdfBytes = await pdfDoc.save();
             const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
-            
+
             const originalName = this.state.file.name.replace('.pdf', '');
-            this.downloadFile(blob, `${originalName}_rotated.pdf`);
+            this.downloadBlob(blob, `${originalName}_rotated.pdf`);
 
         } catch (e: any) {
             console.error(e);
@@ -110,13 +110,4 @@ export class RotatePdfState extends PdfEngine {
         }
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
 }

@@ -1,4 +1,5 @@
 
+import { BaseEngine } from '$lib/base-engine.svelte';
 import {
     initializeQpdf
 } from '$utils/helper';
@@ -11,7 +12,7 @@ export interface EncryptState {
     progress: string;
 }
 
-export class EncryptPdfState {
+export class EncryptPdfState extends BaseEngine {
     // Reactive State
     state = $state<EncryptState>({
         file: null,
@@ -94,7 +95,7 @@ export class EncryptPdfState {
             const outputFile = qpdf.FS.readFile(outputPath);
             
             const blob = new Blob([outputFile], { type: 'application/pdf' });
-            this.downloadFile(blob, `encrypted_${this.state.file.name}`);
+            this.downloadBlob(blob, `encrypted_${this.state.file.name}`);
 
             // Cleanup MEMFS
             try {
@@ -110,13 +111,4 @@ export class EncryptPdfState {
         }
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
 }

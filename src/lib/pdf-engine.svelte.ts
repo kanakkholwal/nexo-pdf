@@ -1,5 +1,5 @@
 import type * as PDFJS from 'pdfjs-dist';
-import { toast } from 'svelte-sonner';
+import { BaseEngine } from './base-engine.svelte';
 
 export interface ProgressState {
     current: number;
@@ -7,10 +7,7 @@ export interface ProgressState {
     text: string;
 }
 
-export class PdfEngine {
-    // Shared State
-    isProcessing = $state(false);
-    progress = $state<ProgressState>({ current: 0, total: 0, text: '' });
+export class PdfEngine extends BaseEngine {
 
     // Protected so subclasses (MergeState, SplitState) can access it
     protected pdfjsLib: typeof PDFJS | null = null;
@@ -69,19 +66,7 @@ export class PdfEngine {
         }
     }
 
-    /**
-     * Shared logic to trigger a file download in the browser.
-     */
-    protected downloadBlob(blob: Blob, fileName: string) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
+
 
     /**
      * Parses a range string (e.g., "1-3, 5") into an array of 0-based page indices.
@@ -112,34 +97,6 @@ export class PdfEngine {
         return Array.from(indices).sort((a, b) => a - b);
     }
 
-    /**
-     * Standardized runner for async tasks with toast notifications.
-     */
-    protected async handleProcess<T>(
-        task: () => Promise<T>,
-        options: {
-            loading?: string;
-            success?: string;
-            error?: string | ((err: any) => string);
-        } = {}
-    ) {
-        const {
-            loading = 'Processing...',
-            success = 'Task completed successfully!',
-            error = 'An error occurred during processing.'
-        } = options;
 
-        this.isProcessing = true;
-        try {
-            const result = await toast.promise(task(), {
-                loading,
-                success,
-                error
-            });
-            return result;
-        } finally {
-            this.isProcessing = false;
-        }
-    }
 }
 

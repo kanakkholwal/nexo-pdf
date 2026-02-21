@@ -130,7 +130,7 @@ export class DeletePagesState extends PdfEngine {
             const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
             
             const originalName = this.state.file.name.replace('.pdf', '');
-            this.downloadFile(blob, `${originalName}_deleted.pdf`);
+            this.downloadBlob(blob, `${originalName}_deleted.pdf`);
 
         } catch (e: any) {
             console.error(e);
@@ -168,13 +168,5 @@ export class DeletePagesState extends PdfEngine {
         return Array.from(pages);
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
+
 }

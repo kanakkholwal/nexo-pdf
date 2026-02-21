@@ -83,8 +83,9 @@
         <div class="flex items-center gap-6">
           <div class="flex gap-4">
             <a
-              href="https://github.com/kanakkholwal/nexo-pdf"
+              href={config.github}
               class="text-muted-foreground transition-colors hover:text-foreground"
+              target="_blank" rel="noopener noreferrer"
             >
               <span class="sr-only">GitHub</span>
               <Github size={18} />

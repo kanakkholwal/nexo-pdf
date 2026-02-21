@@ -105,7 +105,7 @@ export class PdfToJpgState extends PdfEngine {
             const zipBlob = await zip.generateAsync({ type: 'blob' });
             
             const originalName = this.state.file.name.replace('.pdf', '');
-            this.downloadFile(zipBlob, `${originalName}_to_${ext}.zip`);
+            this.downloadBlob(zipBlob, `${originalName}_to_${ext}.zip`);
 
         } catch (e: any) {
             console.error(e);
@@ -115,13 +115,4 @@ export class PdfToJpgState extends PdfEngine {
         }
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
 }

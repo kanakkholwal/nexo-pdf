@@ -196,7 +196,7 @@ export class RemoveBlankPagesState extends PdfEngine {
             const blob = new Blob([newPdfBytes as BlobPart], { type: 'application/pdf' });
             
             const originalName = this.state.file.name.replace('.pdf', '');
-            this.downloadFile(blob, `${originalName}_no_blank.pdf`);
+            this.downloadBlob(blob, `${originalName}_no_blank.pdf`);
 
         } catch (e: any) {
             console.error(e);
@@ -208,13 +208,4 @@ export class RemoveBlankPagesState extends PdfEngine {
         }
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
 }

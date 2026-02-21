@@ -109,7 +109,7 @@
   >
     <a
       href={config.github}
-      target="_blank"
+      target="_blank" rel="noopener noreferrer"
       class="relative overflow-hidden rounded-xl border border-border/50 bg-linear-to-br from-card to-muted/50 p-4 shadow-sm"
     >
       <div class="flex items-center gap-3">

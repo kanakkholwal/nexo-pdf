@@ -82,7 +82,7 @@ export class ExtractPagesState extends PdfEngine {
 
             this.state.progress = 'Creating ZIP...';
             const zipBlob = await zip.generateAsync({ type: 'blob' });
-            this.downloadFile(zipBlob, `${baseName}_extracted.zip`);
+            this.downloadBlob(zipBlob, `${baseName}_extracted.zip`);
 
         } catch (e: any) {
             console.error(e);
@@ -116,13 +116,5 @@ export class ExtractPagesState extends PdfEngine {
         return Array.from(pages).sort((a, b) => a - b);
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
+
 }

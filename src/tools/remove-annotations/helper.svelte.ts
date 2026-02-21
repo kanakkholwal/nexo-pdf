@@ -1,3 +1,4 @@
+import { BaseEngine } from '$lib/base-engine.svelte';
 import { PDFDocument, PDFName } from 'pdf-lib';
 
 export interface RemoveAnnotationsStateData {
@@ -7,7 +8,7 @@ export interface RemoveAnnotationsStateData {
     isProcessing: boolean;
 }
 
-export class RemoveAnnotationsState {
+export class RemoveAnnotationsState extends BaseEngine {
     state = $state<RemoveAnnotationsStateData>({
         file: null,
         pageCount: 0,
@@ -70,7 +71,7 @@ export class RemoveAnnotationsState {
             const blob = new Blob([newPdfBytes as BlobPart], { type: 'application/pdf' });
             
             const originalName = this.state.file.name.replace('.pdf', '');
-            this.downloadFile(blob, `${originalName}_no_annotations.pdf`);
+            this.downloadBlob(blob, `${originalName}_no_annotations.pdf`);
 
         } catch (e: any) {
             console.error(e);
@@ -80,13 +81,4 @@ export class RemoveAnnotationsState {
         }
     }
 
-    private downloadFile(blob: Blob, fileName: string) {
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
 }
