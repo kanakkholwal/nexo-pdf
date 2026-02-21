@@ -1,40 +1,19 @@
 <script lang="ts">
-  import { dev } from "$app/environment";
+  import { browser, dev } from "$app/environment";
   import { page } from "$app/state";
   import { cn } from "$lib/utils";
 
   import { config } from "$constants/app";
-
+  import { isTauriApp } from "$lib/runtime/isTauri";
 
   const adsTypes = {
-    "display-horizontal": {
-      adSlot: "6712325533",
-      adFormat: "auto",
-    },
-    "display-square": {
-      adSlot: "3535390051",
-      adFormat: "auto",
-    },
-    "display-vertical": {
-      adSlot: "9374040095",
-      adFormat: "auto",
-    },
-    multiplex_vertical: {
-      adSlot: "9146917182",
-      adFormat: "autorelaxed",
-    },
-    multiplex_horizontal: {
-      adSlot: "9716110433",
-      adFormat: "autorelaxed",
-    },
-    in_article: {
-      adSlot: "7833835515",
-      adFormat: "autorelaxed",
-    },
-    in_feed: {
-      adSlot: "7760865085",
-      adFormat: "autorelaxed",
-    },
+    "display-horizontal": { adSlot: "6712325533", adFormat: "auto" },
+    "display-square": { adSlot: "3535390051", adFormat: "auto" },
+    "display-vertical": { adSlot: "9374040095", adFormat: "auto" },
+    multiplex_vertical: { adSlot: "9146917182", adFormat: "autorelaxed" },
+    multiplex_horizontal: { adSlot: "9716110433", adFormat: "autorelaxed" },
+    in_article: { adSlot: "7833835515", adFormat: "autorelaxed" },
+    in_feed: { adSlot: "7760865085", adFormat: "autorelaxed" },
   } as const;
 
   type AdType = keyof typeof adsTypes;
@@ -46,6 +25,13 @@
   const id = crypto.randomUUID().slice(0, 8);
   const adsProps = $derived(adsTypes[adSlot]);
   let adRef: HTMLElement | undefined = $state();
+  let isTauri = false;
+
+  $effect(() => {
+    if (!browser) return;
+
+    isTauriApp().then((v) => (isTauri = v));
+  });
 
   // Trigger ad load when path or slot changes
   $effect(() => {
@@ -72,13 +58,17 @@
 {#if dev && !config.adsensePublisherId}
   <div class={cn("adsense-container empty", className)}>
     <div
-      class={cn("relative flex min-h-25 w-full items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/20",className)}
+      class={cn(
+        "relative flex min-h-25 w-full items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-muted/20",
+        className,
+      )}
     >
       <div
         class="absolute inset-0 bg-[radial-gradient(#00000005_1px,transparent_1px)] bg-size-[16px_16px]"
       ></div>
       <div class="relative z-10 text-xs text-muted-foreground">
-        [AdSpace: {adSlot.replace(/-/g, " ")}] - Set ADSENSE_PUBLISHER_ID in .env to see ads
+        [AdSpace: {adSlot.replace(/-/g, " ")}] - Set ADSENSE_PUBLISHER_ID in
+        .env to see ads
       </div>
     </div>
   </div>

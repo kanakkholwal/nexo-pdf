@@ -1,5 +1,5 @@
 import { PdfEngine } from '$lib/pdf-engine.svelte';
-import { PDFDocument, PDFHexString, PDFName, PDFNumber, PDFRef } from 'pdf-lib';
+import { PDFDocument, PDFHexString, PDFName, PDFNumber, type PDFRef } from 'pdf-lib';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 export type BookmarkColor = 'red' | 'blue' | 'green' | 'yellow' | 'purple' | null | string;

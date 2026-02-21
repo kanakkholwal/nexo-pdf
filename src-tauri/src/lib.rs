@@ -1,6 +1,3 @@
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-use tauri_plugin_dialog::DialogExt;
-use tauri_plugin_fs::FsExt;
 
 pub fn run() {
     tauri::Builder::default()

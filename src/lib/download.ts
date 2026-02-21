@@ -1,7 +1,7 @@
-import { isTauri } from "@tauri-apps/api/core";
+import { isTauriApp } from "$lib/runtime/isTauri";
 
 export async function downloadBlobFile(blob: Blob, fileName: string) {
-    if (isTauri()) {
+    if (await isTauriApp()) {
         return downloadBlobTauri(blob, fileName)
     }
 
