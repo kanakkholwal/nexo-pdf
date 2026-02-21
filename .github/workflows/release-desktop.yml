@@ -12,7 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        # platform: [macos-latest, ubuntu-22.04, windows-latest]
+        platform: [ubuntu-22.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
 
@@ -70,7 +71,7 @@ jobs:
 
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "App ${{ github.ref_name }}"
+          releaseName: "Nexo PDF ${{ github.ref_name }}"
           releaseBody: "See the assets to download this version."
           releaseDraft: false
           prerelease: false
