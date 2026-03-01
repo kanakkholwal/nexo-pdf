@@ -60,9 +60,12 @@
         </Button>
       </div>
     </Sidebar.MenuItem>
-    <Sidebar.MenuItem>
-      <PdfCommandMenu />
-    </Sidebar.MenuItem>
+
+    {#if !isTauri}
+      <Sidebar.MenuItem>
+        <PdfCommandMenu />
+      </Sidebar.MenuItem>
+    {/if}
     <Sidebar.MenuItem class="flex items-center gap-2 p-0">
       <Button
         variant="dark"
