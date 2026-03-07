@@ -11,9 +11,9 @@ on:
         type: string
 env:
   NODE_ENV: production
-  # for web platform only, but required by the frontend code, so we set it to an empty string
-  PUBLIC_ADSENSE_PUBLISHER_ID: "" # not needed for desktop app, but required by the frontend code, so we set it to an empty string
-  PUBLIC_GOOGLE_ANALYTICS_ID: ""  # not needed for desktop app, but required by the frontend code, so we set it to an empty string
+  # for web platform only, No tracking in desktop app, but these env vars are required by the frontend code, so we set them to empty strings
+  PUBLIC_ADSENSE_PUBLISHER_ID: "" 
+  PUBLIC_GOOGLE_ANALYTICS_ID: "" 
 jobs:
   # Windows build and release using Tauri's GitHub Action. This is separate to ensure we can sign the Windows executable properly.
   build-windows:

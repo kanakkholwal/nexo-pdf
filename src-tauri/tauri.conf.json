@@ -13,13 +13,17 @@
     "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "Orbit PDF",
-        "width": 800,
-        "height": 600,
+        "width": 1280,
+        "height": 720,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "transparent": true,
+        "center": true
       }
     ],
+    
     "security": {
       "csp": null
     }
@@ -39,9 +43,10 @@
     },
     "linux": {
       "appimage": {}
-    }
+    },
+    "createUpdaterArtifacts": true
   },
-   "plugins": {
+  "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDE2M0M0NEFBM0NBM0FDRDQKUldUVXJLTThxa1E4Rm9OR3FiaktjZWx5QUlwTjVBdFZxckNhRzNEeFEydnNZSUtZMjJxV0lIdGEK",
       "endpoints": [
