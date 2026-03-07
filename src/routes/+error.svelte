@@ -1,9 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import "@fontsource/google-sans/400.css";
-  import "@fontsource/google-sans/500.css";
-  import "@fontsource/google-sans/600.css";
-  import "@fontsource/google-sans/700.css";
+  import "@fontsource-variable/google-sans";
+
   import {
     AlertTriangle,
     ArrowLeft,
