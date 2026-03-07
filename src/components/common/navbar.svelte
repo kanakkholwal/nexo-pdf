@@ -7,6 +7,7 @@
   import {
     ChevronRight,
     Compass,
+    DownloadIcon,
     Github,
     LayoutGrid,
     Menu,
@@ -144,7 +145,7 @@
               size="sm"
               class="hidden sm:inline-flex rounded-full px-5! font-semibold shadow-sm"
             >
-              <MonitorDown size={14} />
+              <DownloadIcon size={14} />
               Native App
             </Button>
 

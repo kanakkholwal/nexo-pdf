@@ -20,6 +20,11 @@
     color?: string;
   }
 
+  interface GroupedCommand {
+    command: CommandItem;
+    index: number;
+  }
+
   let open = $state(false);
   let searchValue = $state("");
   let selectedIndex = $state(0);
@@ -148,12 +153,12 @@
 
   // Group commands by category
   function groupedCommands() {
-    const groups: { [key: string]: CommandItem[] } = {};
-    filteredCommands.forEach((cmd) => {
+    const groups: { [key: string]: GroupedCommand[] } = {};
+    filteredCommands.forEach((cmd, index) => {
       if (!groups[cmd.category]) {
         groups[cmd.category] = [];
       }
-      groups[cmd.category].push(cmd);
+      groups[cmd.category].push({ command: cmd, index });
     });
     return groups;
   }
@@ -184,7 +189,7 @@
             >Search tools...</span
           >
           <kbd
-            class="group-data-[st ate=collapsed]:hidden! hidden items-center gap-1 rounded-md border border-border/40 bg-background/50 px-2 py-1 font-mono text-[11px] font-medium text-muted-foreground/70 backdrop-blur-sm sm:inline-flex"
+            class="group-data-[state=collapsed]:hidden! hidden items-center gap-1 rounded-md border border-border/40 bg-background/50 px-2 py-1 font-mono text-[11px] font-medium text-muted-foreground/70 backdrop-blur-sm sm:inline-flex"
           >
             <span
               class="text-xs font-semibold group-data-[state=collapsed]:hidden"
@@ -212,15 +217,15 @@
         {:else}
           {#each Object.entries(groupedCommands()) as [category, categoryCommands]}
             <Command.Group heading={category}>
-              {#each categoryCommands as command}
-                {@const isSelected =
-                  selectedIndex === filteredCommands.indexOf(command)}
+              {#each categoryCommands as { command, index }}
+                {@const isSelected = selectedIndex === index}
                 <Command.Item
                   value={command.id}
+                  onmouseenter={() => (selectedIndex = index)}
                   onSelect={() => runCommand(command.action)}
                   class={cn(
-                    isSelected &&
-                      "aria-selected:bg-accent aria-selected:text-primary-foreground",
+                    "cursor-pointer rounded-md border border-transparent transition-colors hover:bg-accent hover:text-accent-foreground hover:border-border",
+                    isSelected && "aria-selected:bg-primary/5 aria-selected:text-foreground aria-selected:border-primary",
                   )}
                 >
                   {#if command.icon}
@@ -230,7 +235,7 @@
                     />
                   {/if}
                   <div class="flex flex-col flex-1 min-w-0 gap-0.5">
-                    <span class="font-medium truncate">{command.title}</span>
+                    <span class="font-medium truncate text-foreground">{command.title}</span>
                     {#if command.description}
                       <span class="text-xs text-muted-foreground truncate">
                         {command.description}
@@ -247,7 +252,7 @@
         {/if}
       </Command.List>
     </Command.Root>
-    <div			class="text-muted-foreground absolute inset-x-0 bottom-0 z-20 flex h-10 items-center gap-2 rounded-b-xl border-t border-t-neutral-100 bg-neutral-50 px-4 text-xs font-medium dark:border-t-neutral-700 dark:bg-neutral-800">
+    <div	class="text-muted-foreground absolute inset-x-0 bottom-0 z-20 flex h-10 items-center gap-2 rounded-b-xl border-t border-t-neutral-100 bg-neutral-50 px-4 text-xs font-medium dark:border-t-neutral-700 dark:bg-neutral-800">
       <div class="flex items-center justify-between">
         <span
           >Press <kbd class="rounded bg-background px-1.5 py-0.5">Esc</kbd> to
