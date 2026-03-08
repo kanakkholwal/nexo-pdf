@@ -1,5 +1,6 @@
 <script lang="ts">
   import Logo from "$components/Logo.svelte";
+  import ThemeToggle from "$components/ThemeToggle.svelte";
   import { Button } from "$components/ui/button";
   import { config } from "$constants/app";
   import { isTauriApp } from "$lib/runtime/isTauri";
@@ -12,11 +13,8 @@
     LayoutGrid,
     Menu,
     MonitorDown,
-    Moon,
-    Sun,
-    X,
+    X
   } from "@lucide/svelte";
-  import { mode, toggleMode } from "mode-watcher";
   import { onMount } from "svelte";
   import { cubicOut } from "svelte/easing";
   import { slide } from "svelte/transition";
@@ -58,19 +56,7 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <Button
-          onclick={toggleMode}
-          variant="ghost"
-          size="icon"
-          class="size-8 rounded-full text-muted-foreground hover:text-foreground"
-        >
-          {#if mode.current === "light"}
-            <Sun size={16} />
-          {:else}
-            <Moon size={16} />
-          {/if}
-          <span class="sr-only">Toggle theme</span>
-        </Button>
+        <ThemeToggle class="size-8" />
       </div>
     </header>
   {:else}
@@ -117,25 +103,7 @@
               <Github size={18} />
             </a>
 
-            <Button
-              onclick={toggleMode}
-              variant="ghost"
-              size="icon"
-              class="size-9 rounded-full hidden sm:inline-flex text-muted-foreground hover:text-foreground"
-            >
-              {#if mode.current === "light"}
-                <Sun
-                  size={18}
-                  class="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-                />
-              {:else}
-                <Moon
-                  size={18}
-                  class="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-                />
-              {/if}
-              <span class="sr-only">Toggle theme</span>
-            </Button>
+            <ThemeToggle class="hidden sm:inline-flex" />
 
             <div class="hidden md:block h-4 w-px bg-border mx-1"></div>
 
@@ -214,18 +182,7 @@
               <span class="text-sm font-medium text-foreground"
                 >Theme Preference</span
               >
-              <Button
-                onclick={toggleMode}
-                variant="secondary"
-                size="sm"
-                class="rounded-full px-4"
-              >
-                {#if mode.current === "light"}
-                  <Sun size={14} class="mr-2" /> Light Mode
-                {:else}
-                  <Moon size={14} class="mr-2" /> Dark Mode
-                {/if}
-              </Button>
+              <ThemeToggle />
             </div>
 
             <div class="mt-6 flex flex-col gap-3">

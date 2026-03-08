@@ -34,13 +34,13 @@
 
   /* proposed */
   /* --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.985 0 0);
-    --success: oklch(0.646 0.222 142.495);
-    --success-foreground: oklch(0.985 0 0);
-    --warning: oklch(0.828 0.189 84.429);
-    --warning-foreground: oklch(0.145 0 0);
-    --info: oklch(0.6 0.118 184.704);
-    --info-foreground: oklch(0.985 0 0); */
+    --destructive-foreground: oklch(0.985 0 0); */
+  --success: oklch(0.646 0.222 142.495);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.828 0.189 84.429);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.6 0.118 184.704);
+  --info-foreground: oklch(0.985 0 0);
   /* design kit vars */
   --primary-blue: hsla(201, 100%, 95%);
   --primary-purple: hsla(215, 49%, 93%);
@@ -71,17 +71,6 @@
 
   --noise-bg: url(/light-noise.svg), linear-gradient(hsl(40, 30%, 96%), hsl(40, 30%, 96%));
 
-  --text-primary: hsl(0deg 0% 96.08%);
-  --text-secondary: hsl(0deg 0% 9.8%);
-  --text-tertiary: hsl(0deg 0% 9.8%);
-  --bg-primary: hsl(0deg 0% 96.08%);
-  --bg-secondary: hsl(0deg 0% 9.8%);
-  --bg-tertiary: hsl(0deg 0% 9.8%);
-  --bg-quaternary: hsl(0deg 0% 9.8%);
-  --bg-button: hsl(0deg 0% 9.8%);
-  --border-primary: hsla(0, 0%, 100%, 0.12);
-  --border-secondary: hsla(0, 0%, 100%, 0.08);
-  --button-shadow: 0px -1px 0px 0px hsla(0, 0%, 100%, 0.04), 0px 0px 0px 1px hsla(0, 0%, 100%, 0.12), 0px 0px 1px 0px rgba(0, 0, 0, 0.04), 0px 2px 2px 0px rgba(0, 0, 0, 0.04), 0px 4px 2px 0px rgba(0, 0, 0, 0.04), 0px 6px 3px 0px rgba(0, 0, 0, 0.04);
 
   /* Charts: Adjusted for harmony with the violet theme */
   --chart-1: hsl(262 80% 50%);
@@ -151,13 +140,13 @@
 
   /* proposed */
   /* --destructive: oklch(0.704 0.191 22.216);
-    --destructive-foreground: oklch(0.985 0 0);
-    --success: oklch(0.488 0.243 142.495);
-    --success-foreground: oklch(0.985 0 0);
-    --warning: oklch(0.627 0.265 84.429);
-    --warning-foreground: oklch(0.145 0 0);
-    --info: oklch(0.696 0.17 184.704);
-    --info-foreground: oklch(0.985 0 0); */
+    --destructive-foreground: oklch(0.985 0 0); */
+  --success: oklch(0.488 0.243 142.495);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.627 0.265 84.429);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.696 0.17 184.704);
+  --info-foreground: oklch(0.985 0 0);
   /* design kit vars */
   --primary-light: hsla(0, 0%, 100%, 0.05);
   --primary-purple: hsla(215, 49%, 93%, 1);
@@ -196,23 +185,6 @@
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
 
-  /* inspiration */
-  --color-fd-background: hsl(0, 0%, 7.06%);
-  --color-fd-foreground: hsl(0, 0%, 92.16%);
-  --color-fd-muted: hsl(0, 0.01%, 12.16%);
-  --color-fd-muted-foreground: hsl(0, 0%, 61%);
-  --color-fd-popover: hsl(0, 0%, 9.8%);
-  --color-fd-popover-foreground: hsl(0, 0%, 92.16%);
-  --color-fd-card: hsl(0, 0%, 9.8%);
-  --color-fd-card-foreground: hsl(0, 0%, 92.16%);
-  --color-fd-border: hsl(0, 0%, 14%);
-  --color-fd-primary: hsl(0, 0%, 92.16%);
-  --color-fd-primary-foreground: hsl(0, 0%, 17.6%);
-  --color-fd-secondary: hsl(0, 0%, 21.2%);
-  --color-fd-secondary-foreground: hsl(0, 0%, 92.16%);
-  --color-fd-accent: hsl(0, 0%, 27.5%);
-  --color-fd-accent-foreground: hsl(0, 0%, 90.2%);
-  --color-fd-ring: hsl(0, 0%, 55%);
 }
 
 @theme inline {
@@ -250,6 +222,14 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -279,85 +259,10 @@
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-accordion-fade-in: accordion-fade-in 0.2s ease-out;
   --animate-accordion-fade-out: accordion-fade-out 0.2s ease-out;
-  --animate-border-beam: border-beam calc(var(--duration)*1s) infinite linear;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
-  --animate-gradient: gradient 8s linear infinite;
-  --animate-spin-slow: spin-slow 20s linear infinite;
-  --animate-spin-reverse: spin-slow 20s linear infinite reverse;
-  --animate-canopy-horizontal: canopy-x var(--duration) infinite linear;
-  --animate-canopy-vertical: canopy-y var(--duration) infinite linear;
-  --animate-bounce-slow: bounce 3s infinite;
-  --animate-wiggle: bounce 3s infinite;
-  --animate-grid: grid 15s infinite linear;
 
-  @keyframes grid {
-    from {
-      transform: translateY(-50%);
-    }
 
-    to {
-      transform: translateY(0)
-    }
-  }
-
-  @keyframes wiggle {
-
-    0%,
-    100% {
-      transform: rotate(-3deg)
-    }
-
-    50%: {
-      transform: rotate(3deg)
-    }
-  }
-
-  @keyframes canopy-x {
-    from {
-      transform: translateX(0);
-    }
-
-    to {
-      transform: translateX(calc(-100% - var(--gap)))
-    }
-  }
-
-  @keyframes canopy-y {
-    from {
-      transform: translateY(0);
-    }
-
-    to {
-      transform: translateY(calc(-100% - var(--gap)))
-    }
-  }
-
-  @keyframes gradient {
-    to {
-      background-position: var(--bg-size, 300%) 0;
-    }
-  }
-
-  @keyframes spin-slow {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes spin-reverse {
-    from {
-      transform: rotate(0deg);
-    }
-
-    to {
-      transform: rotate(-360deg);
-    }
-  }
 
   @keyframes accordion-down {
     0% {
@@ -429,27 +334,7 @@
     }
   }
 
-  --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
 
-  --color-color-5: var(--color-5);
-
-  --color-color-4: var(--color-4);
-
-  --color-color-3: var(--color-3);
-
-  --color-color-2: var(--color-2);
-
-  --color-color-1: var(--color-1);
-
-  @keyframes rainbow {
-    0% {
-      background-position: 0%;
-    }
-
-    100% {
-      background-position: 200%;
-    }
-  }
 }
 
 @layer base {
