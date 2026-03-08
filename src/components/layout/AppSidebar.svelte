@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import Logo from "$components/Logo.svelte";
+  import ThemeToggle from "$components/ThemeToggle.svelte";
   import SearchCommandMenu from "$components/layout/SearchCommandMenu.svelte";
   import Button from "$components/ui/button/button.svelte";
   import * as Sidebar from "$components/ui/sidebar";
@@ -12,11 +13,8 @@
     Chromium,
     DownloadIcon,
     GithubIcon,
-    Moon,
     Star,
-    Sun,
   } from "@lucide/svelte";
-  import { mode, toggleMode } from "mode-watcher";
   import { onMount } from "svelte";
   // Derived state for reactivity
   let currentPath = $derived(page.url.pathname);
@@ -46,18 +44,7 @@
         >
           <Logo size="md" textClassName="group-data-[state=collapsed]:hidden" />
         </a>
-        <Button
-          variant="ghost"
-          size="icon"
-          onclick={toggleMode}
-          class="rounded-full hidden md:inline-flex group-data-[state=collapsed]:hidden"
-        >
-          {#if mode.current === "light"}
-            <Sun size={16} />
-          {:else}
-            <Moon size={16} />
-          {/if}
-        </Button>
+        <ThemeToggle class="hidden md:inline-flex group-data-[state=collapsed]:hidden" />
       </div>
     </Sidebar.MenuItem>
 

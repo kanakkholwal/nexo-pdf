@@ -13,11 +13,21 @@
   import { onMount, tick } from "svelte";
 // import { ProgressBar } from "@prgm/sveltekit-progress-bar";
   import Loader from "$components/common/loader.svelte";
+  import { getTauriTheme, isTauriApp } from "$lib/runtime/isTauri";
+  import { setMode } from "mode-watcher";
 
   // Remove the boot splash screen after the app is mounted
   onMount(async () => {
     await tick();
     document.getElementById("boot")?.remove();
+    
+    if (await isTauriApp()) {
+      const theme = await getTauriTheme();
+      const stored = localStorage.getItem("mode-watcher-mode");
+      if (theme && (!stored || stored === "system")) {
+        setMode(theme);
+      }
+    }
   });
 </script>
 
