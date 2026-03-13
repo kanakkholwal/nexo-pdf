@@ -1,8 +1,10 @@
 <script lang="ts">
   import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
+  import Seo from "$components/Seo.svelte";
   import { Button } from "$components/ui/button";
   import Input from "$components/ui/input/input.svelte";
+  import { config } from "$constants/app";
   import { toolsCategories } from "$constants/tools";
   import { ArrowRight, ArrowUpRight, Search, Sparkles } from "@lucide/svelte";
 
@@ -28,6 +30,7 @@
       .filter(Boolean),
   );
 
+  const exploreKeywords = [...config.appKeywords, 'pdf tools', 'pdf converter', 'pdf editor online free'];
   function updateCategory(category: string) {
     const url = new URL(page.url);
     if (category === "all") {
@@ -50,6 +53,12 @@
     replaceState(url.href, { scroll: false });
   }
 </script>
+
+<Seo 
+  title="Explore Free PDF Tools | Orbit - No Upload, 100% Offline"
+  description="Explore a complete library of free, fast PDF tools. Edit, convert, merge, and process PDFs entirely in your browser with zero data uploads."
+  keywords={exploreKeywords}
+/>
 
 <main
   class="relative z-10 container mx-auto px-4 py-24 md:py-32 pt-10! max-w-app @container"

@@ -1,12 +1,16 @@
 <script lang="ts">
   import Footer from "$components/common/footer.svelte";
   import Navbar from "$components/common/navbar.svelte";
+  import Seo from "$components/Seo.svelte";
   import { Button } from "$components/ui/button";
   import { config } from "$constants/app";
   import { trackNativeAppDownload } from "$lib/analytics-tracker";
   import { Download } from "@lucide/svelte";
 
   let { data } = $props();
+
+  const downloadKeywords = [...config.appKeywords, 'download orbit', 'orbit pdf download', 'offline pdf tools desktop'];
+
 
   const platforms = $derived([
     {
@@ -34,6 +38,12 @@
 <svelte:head>
   <title>Download {config.appName}</title>
 </svelte:head>
+
+<Seo 
+  title="Download {config.appName} - Free Offline PDF Tool"
+  description="Download Orbit PDF for Windows, Linux, and macOS. Free, fast, offline-first PDF editor and converter. No data uploads, 100% client-side."
+  keywords={downloadKeywords}
+/>
 
 <div class="relative flex min-h-screen w-full flex-col">
   <Navbar />

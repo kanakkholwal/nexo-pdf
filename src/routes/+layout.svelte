@@ -9,13 +9,12 @@
   import { Toaster } from "$components/ui/sonner";
   import { config } from "$constants/app";
   import Analytics from "$lib/Analytics.svelte";
-  import { ModeWatcher } from "mode-watcher";
+  import { getTauriTheme, listenToTauriTheme } from "$lib/runtime/isTauri";
+  import { appState } from "$stores/app-state.svelte";
+  import { ModeWatcher, setMode } from "mode-watcher";
   import { onMount, tick } from "svelte";
 // import { ProgressBar } from "@prgm/sveltekit-progress-bar";
   import Loader from "$components/common/loader.svelte";
-  import { getTauriTheme, listenToTauriTheme } from "$lib/runtime/isTauri";
-  import { appState } from "$stores/app-state.svelte";
-  import { setMode } from "mode-watcher";
 
   // Remove the boot splash screen after the app is mounted
   onMount(async () => {
@@ -39,7 +38,7 @@
   });
 </script>
 
-<Seo title={config.appName} description={config.appDescription} isBase={true} />
+<Seo title={config.appName} description={config.appDescription} keywords={config.appKeywords} isBase={true} />
 
 <Loader />
 <ModeWatcher />
