@@ -20,7 +20,7 @@
   onMount(async () => {
     await tick();
     document.getElementById("boot")?.remove();
-    
+
     // Initialize global app state
     await appState.init();
 
@@ -30,15 +30,20 @@
       if (theme && (!stored || stored === "system")) {
         setMode(theme);
       }
-      
+
       await listenToTauriTheme((theme) => {
-         setMode(theme as 'light' | 'dark');
+        setMode(theme as "light" | "dark");
       });
     }
   });
 </script>
 
-<Seo title={config.appName} description={config.appDescription} keywords={config.appKeywords} isBase={true} />
+<Seo
+  title={config.appName}
+  description={config.appDescription}
+  keywords={config.appKeywords}
+  isBase={true}
+/>
 
 <Loader />
 <ModeWatcher />
