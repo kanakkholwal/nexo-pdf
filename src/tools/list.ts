@@ -402,7 +402,18 @@ const tools: Record<string, ToolConfig> = {
         component: () => import('./deskew-pdf/tool.svelte'),
         color: 'text-red-500',
         keywords: ['deskew pdf', 'correct skewed pages', 'straighten pdf pages', 'pdf page alignment', 'fix misaligned pages', 'pdf deskewing tool', 'automated page correction']
-    }
+    },
+    "validate-signature-pdf":{
+        slug: "validate-signature-pdf",
+        title: "Validate PDF Signature",
+        description: "Verify the authenticity of digital signatures in your PDF documents. Ensure document integrity and trustworthiness with our signature validation tool.",
+        category: 'security',
+        icon: Lock,
+        component: () => import('./validate-signature-pdf/tool.svelte'),
+        color: 'text-green-500',
+        keywords: ['validate pdf signature', 'verify digital signature', 'pdf signature validation', 'check pdf signature authenticity', 'pdf document integrity', 'signature verification tool', 'trusted pdf signatures']
+        
+    },
 };
 
 
@@ -414,6 +425,16 @@ export { tools };
 
 export const toolKeys = Object.keys(tools);
 export const toolList = Object.values(tools);
+
+export const getRecommendedTools = (slug: string): Omit<ToolConfig & {relevance: number}, 'component'>[] => {
+    const tool = getTool(slug);
+    if (!tool) return [];
+    return toolList.map(({component, ...t}) => {
+        if (t.slug === slug) return null;
+        const sharedKeywords = t.keywords?.filter(keyword => tool.keywords?.includes(keyword)) || [];
+        return { ...t, relevance: sharedKeywords.length };
+    }).filter((t): t is Omit<ToolConfig & {relevance: number}, 'component'> => t !== null && t.relevance > 0).sort((a, b) => (b?.relevance || 0) - (a?.relevance || 0)).slice(0, 5);
+}
 
 export const getToolsByCategory = (category: string) => Object.values(tools)
     .filter(tool => tool.category === category);
