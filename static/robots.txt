@@ -1,3 +1,17 @@
-# allow crawling everything by default
+# Robots.txt for Orbit PDF
+# Allow all bots to crawl the site
+
 User-agent: *
-Disallow:
+Allow: /
+
+# Disallow private/admin routes
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /_/
+Disallow: /*.json
+
+# Point search engines to sitemap
+Sitemap: https://orbit.nexonauts.com/sitemap.xml
+
+# Crawl delay (optional - allow fast crawling)
+Crawl-delay: 1

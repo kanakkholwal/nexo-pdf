@@ -1,6 +1,7 @@
 <script lang="ts">
   import Footer from "$components/common/footer.svelte";
   import Navbar from "$components/common/navbar.svelte";
+  import Seo from "$components/Seo.svelte";
   import { Button } from "$components/ui/button";
   import { config } from "$constants/app";
   import { toolList } from "$tools/list";
@@ -37,6 +38,13 @@
     },
   ];
 </script>
+
+<Seo 
+  title="Free, Fast & Offline PDF Tools | Orbit"
+  description={config.appDescription}
+  keywords={config.appKeywords}
+  isBase={true}
+/>
 
 <div class="relative flex min-h-screen w-full flex-col">
   <Navbar />
