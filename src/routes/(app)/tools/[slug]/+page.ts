@@ -1,4 +1,4 @@
-import { getTool } from '$tools/list';
+import { getRecommendedTools, getTool } from '$tools/list';
 
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
@@ -10,7 +10,7 @@ export const load: PageLoad = ({ params }) => {
 
   if (!tool) {
     error(404, 'Not found');
-
   }
-  return { tool };
+  const recommended = getRecommendedTools(params.slug);
+  return { tool, recommended };
 };

@@ -8,6 +8,7 @@
   import { Button } from "$components/ui/button";
   import { config } from "$constants/app";
   import {
+    ArrowUpRight,
     ChevronLeft,
     Github,
     Info,
@@ -68,7 +69,13 @@
         </Button>
 
         <div class="inline-flex gap-2 items-center flex-wrap">
-          <Button variant="dark" size="sm" href={config.github} target="_blank" rel="noopener noreferrer">
+          <Button
+            variant="dark"
+            size="sm"
+            href={config.github}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Github class="size-3.5" />
             <span class="hidden md:inline-block">Star on Github</span>
           </Button>
@@ -189,8 +196,9 @@
                     Failed to load tool
                   </p>
                   <p class="text-xs text-muted-foreground max-w-xs">
-                    Something went wrong while loading <strong>{tool.title}</strong>.
-                    Please try refreshing the page or come back later.
+                    Something went wrong while loading <strong
+                      >{tool.title}</strong
+                    >. Please try refreshing the page or come back later.
                   </p>
                 </div>
                 <div class="flex gap-2 mt-2">
@@ -231,6 +239,40 @@
           {#key tool.slug}
             <AdUnit adSlot="multiplex_horizontal" />
           {/key}
+          <div
+            class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {#each data.recommended as tool}
+              <a
+                href={`/tools/${tool.slug}`}
+                class="group flex flex-col justify-between p-5 rounded-xl border border-border bg-card/80 hover:bg-secondary/80 transition-colors relative overflow-hidden"
+              >
+                <div class="flex items-start justify-between mb-4">
+                  <div
+                    class={`p-2.5 rounded-lg ${tool.color} bg-opacity-10 text-current`}
+                  >
+                    {#if tool.icon}
+                      {@const Icon = tool.icon}
+                      <Icon size={20} />
+                    {/if}
+                  </div>
+                  <ArrowUpRight
+                    size={18}
+                    class="text-muted-foreground opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  />
+                </div>
+
+                <div>
+                  <h3 class="font-bold text-foreground mb-1">{tool.title}</h3>
+                  <p
+                    class="text-xs text-muted-foreground line-clamp-2 leading-relaxed"
+                  >
+                    {tool.description}
+                  </p>
+                </div>
+              </a>
+            {/each}
+          </div>
         </div>
 
         <div class="py-10 text-center">
