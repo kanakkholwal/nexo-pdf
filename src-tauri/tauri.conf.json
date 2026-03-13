@@ -35,7 +35,8 @@
     "icon": [
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/favicon.ico"
+      "icons/favicon.ico",
+      "icons/icon.icns"
     ],
     "windows": {
       "digestAlgorithm": "sha256",
