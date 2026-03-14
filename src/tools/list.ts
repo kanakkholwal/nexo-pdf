@@ -433,7 +433,7 @@ export const getRecommendedTools = (slug: string): Omit<ToolConfig & {relevance:
         if (t.slug === slug) return null;
         const sharedKeywords = t.keywords?.filter(keyword => tool.keywords?.includes(keyword)) || [];
         return { ...t, relevance: sharedKeywords.length };
-    }).filter((t): t is Omit<ToolConfig & {relevance: number}, 'component'> => t !== null && t.relevance > 0).sort((a, b) => (b?.relevance || 0) - (a?.relevance || 0)).slice(0, 5);
+    }).filter((t): t is Omit<ToolConfig & {relevance: number}, 'component'> => t !== null).sort((a, b) => (b?.relevance || 0) - (a?.relevance || 0)).slice(0, 5);
 }
 
 export const getToolsByCategory = (category: string) => Object.values(tools)

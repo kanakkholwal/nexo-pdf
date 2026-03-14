@@ -6,7 +6,6 @@
   } from "svelte/elements";
   import { tv, type VariantProps } from "tailwind-variants";
 
-  
   export const buttonVariants = tv({
     base: "gap-2 focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all active:scale-95 outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     variants: {
@@ -34,15 +33,17 @@
         info_soft: "bg-sky-600/10 text-sky-600 hover:bg-sky-600/20",
         warning: "bg-amber-600 hover:bg-amber-500 text-amber-100",
         warning_soft: "bg-amber-600/10 text-amber-600 hover:bg-amber-600/20",
-        raw:""
+        raw: "",
       },
       size: {
-        default: "h-9 px-5 py-2.5 has-[>svg]:px-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5 text-xs font-medium",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "h-10 px-5 py-2.5 has-[>svg]:px-3 [&>svg]:size-5",
+        xs: "h-7 px-4 py-2 has-[>svg]:px-3 [&>svg]:size-3",
+        sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5 [&>svg]:size-4 text-xs font-medium",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4 [&>svg]:size-5",
+        icon: "size-10 [&>svg]:size-5",
+        "icon-xs": "size-5 rounded-sm [&>svg]:size-3",
+        "icon-sm": "size-8 [&>svg]:size-4",
+        "icon-lg": "size-12 [&>svg]:size-6",
       },
     },
     defaultVariants: {

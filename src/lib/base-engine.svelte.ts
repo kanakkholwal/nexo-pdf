@@ -46,7 +46,7 @@ export class BaseEngine {
     /**
  * Shared logic to trigger a file download in the browser and Native environments.
  */
-    protected downloadBlob(blob: Blob, fileName: string) {
+    downloadBlob(blob: Blob, fileName: string) {
         try {
             downloadBlobFile(blob, fileName);
         } catch (error) {
