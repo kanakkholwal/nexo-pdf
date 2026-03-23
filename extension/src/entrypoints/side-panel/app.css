@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --background: hsl(40, 30%, 96%);
+  --foreground: hsl(0deg 0% 9.8%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(0deg 0% 9.8%);
+  --primary: hsl(175, 84%, 32%);
+  --primary-foreground: hsl(0deg 0% 92.16%);
+  --muted: hsl(0, 0%, 92%);
+  --muted-foreground: hsl(220 8.9% 46.1%);
+  --border: hsl(220 13% 91%);
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: hsl(222.2 84% 4.9%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(222.2 84% 4.9%);
+  --card-foreground: hsl(210 40% 98%);
+  --primary: hsl(175, 84%, 42%);
+  --primary-foreground: hsl(222.2 47.4% 11.2%);
+  --muted: hsl(217.2 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  --border: hsl(217.2 32.6% 17.5%);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
