@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "wxt dev",
+    "dev": "wxt",
     "build": "wxt build",
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
@@ -18,8 +18,9 @@
     "wxt": "^0.20.20"
   },
   "dependencies": {
+    "@fontsource-variable/google-sans": "^5.2.1",
     "@lucide/svelte": "^0.577.0",
-    "tailwindcss": "^4.2.2",
-    "@tailwindcss/vite": "^4.2.2"
+    "@tailwindcss/vite": "^4.2.2",
+    "tailwindcss": "^4.2.2"
   }
 }

@@ -5,6 +5,7 @@
     "": {
       "name": "orbit-extension",
       "dependencies": {
+        "@fontsource-variable/google-sans": "^5.2.1",
         "@lucide/svelte": "^0.577.0",
         "@tailwindcss/vite": "^4.2.2",
         "tailwindcss": "^4.2.2",
@@ -98,6 +99,8 @@
     "@esbuild/win32-ia32": ["@esbuild/win32-ia32@0.27.4", "", { "os": "win32", "cpu": "ia32" }, "sha512-DAyGLS0Jz5G5iixEbMHi5KdiApqHBWMGzTtMiJ72ZOLhbu/bzxgAe8Ue8CTS3n3HbIUHQz/L51yMdGMeoxXNJw=="],
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.27.4", "", { "os": "win32", "cpu": "x64" }, "sha512-+knoa0BDoeXgkNvvV1vvbZX4+hizelrkwmGJBdT17t8FNPwG2lKemmuMZlmaNQ3ws3DKKCxpb4zRZEIp3UxFCg=="],
+
+    "@fontsource-variable/google-sans": ["@fontsource-variable/google-sans@5.2.1", "", {}, "sha512-dMyMlJVRJgQvvYlJLcrg2oiVzlKAuIMrbDxIMchEiMBGmpOA6VnVblj3cPfJyA0/fNPQS6krZaiJyJjHJZmkzw=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 
