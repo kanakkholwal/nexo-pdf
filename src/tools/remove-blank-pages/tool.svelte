@@ -1,15 +1,13 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Label } from "$components/ui/label";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { formatBytes } from "$utils/helper";
   import {
-    CheckCircle2,
     FileQuestion,
-    FileText,
-    Loader2,
+    LoaderCircle,
     Search,
-    Trash2,
     Zap,
   } from "@lucide/svelte";
   import { RemoveBlankPagesState } from "./helper.svelte";
@@ -24,132 +22,133 @@
     onFilesSelected={(files) => store.loadFile(files)}
   />
 {:else}
-  <div
-    class="sticky top-0 z-20 border-b border-border bg-accent/50 p-4 rounded-lg"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 class="text-sm font-semibold flex items-center gap-2">
-        <FileText size={18} class="text-primary" />
-        {store.state.file.name}
-        <span class="text-xs font-normal text-muted-foreground ml-2">
-          {formatBytes(store.state.originalSize)} • {store.state.pageCount} Pages
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
+
+    <ToolPanel title="Source">
+      <FileRow name={store.state.file.name}>
+        <span class="font-mono tabular-nums">
+          {formatBytes(store.state.originalSize)}
         </span>
-      </h2>
-      <div class="flex items-center gap-2">
-        <Button variant="ghost" onclick={() => store.reset()}>
-          <Trash2 size={16} /> Clear
-        </Button>
-      </div>
-    </div>
-  </div>
+        <span class="text-muted-foreground/40">·</span>
+        <span class="font-mono tabular-nums">
+          {store.state.pageCount} pages
+        </span>
+      </FileRow>
+    </ToolPanel>
 
-  <div class="flex-1 overflow-y-auto bg-muted/10 p-6 space-y-8">
-    <div class="max-w-4xl mx-auto space-y-8">
-      <div
-        class="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6 max-w-xl mx-auto"
-      >
-        <h3
-          class="text-sm font-semibold flex items-center gap-2 border-b border-border pb-3"
-        >
-          <Search size={16} class="text-primary" /> Detection Settings
-        </h3>
-
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <Label for="sensitivity">Sensitivity</Label>
-              <span class="text-xs font-medium">{store.state.sensitivity}%</span
-              >
-            </div>
-            <input
-              id="sensitivity"
-              type="range"
-              min="0"
-              max="100"
-              step="5"
-              bind:value={store.state.sensitivity}
-              class="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
-            />
-            <p class="text-[10px] text-muted-foreground">
-              Higher sensitivity catches pages with tiny artifacts (like scan
-              dust). Lower sensitivity only catches pure white pages.
-            </p>
-          </div>
-
-          <Button
-            variant="outline"
-            class="w-full"
-            onclick={() => store.detectBlankPages()}
-            disabled={store.state.isDetecting || store.isProcessing}
+    <ToolPanel title="Detection">
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <Label
+            for="sensitivity"
+            class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
           >
-            {#if store.state.isDetecting}
-              <Loader2 class="animate-spin mr-2" size={16} />
-              {store.progress}
-            {:else}
-              <Search size={16} class="mr-2" /> Detect Blank Pages
-            {/if}
-          </Button>
+            Sensitivity
+          </Label>
+          <span class="font-mono text-sm tabular-nums text-primary">
+            {store.state.sensitivity}%
+          </span>
         </div>
+        <input
+          id="sensitivity"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          bind:value={store.state.sensitivity}
+          class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted/60 accent-primary"
+        />
+        <p class="text-xs leading-relaxed text-muted-foreground">
+          Higher values catch pages with tiny artifacts (scan dust). Lower
+          values only flag pure-white pages.
+        </p>
       </div>
 
-      {#if store.state.hasPerformedDetection}
-        <div
-          class="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6"
-        >
-          <h3
-            class="text-sm font-semibold flex items-center gap-2 border-b border-border pb-3"
-          >
-            <CheckCircle2 size={16} class="text-primary" /> Review Results
-          </h3>
-
-          {#if store.state.detectedPages.length === 0}
-            <div
-              class="flex flex-col items-center justify-center py-8 text-muted-foreground"
-            >
-              <FileQuestion size={32} class="mb-2 opacity-50" />
-              <p class="text-sm font-medium">No blank pages detected.</p>
-              <p class="text-xs">
-                Try increasing the sensitivity if you think some were missed.
-              </p>
-            </div>
-          {:else}
-            <div
-              class="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-3 rounded-lg text-sm mb-4"
-            >
-              Found <strong>{store.state.detectedPages.length}</strong> potentially
-              blank page(s). Click on a thumbnail to unselect it if you want to keep
-              it.
-            </div>
-
-            <div
-              class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 bg-muted/30 p-4 rounded-lg border border-border max-h-100 overflow-y-auto"
-            >
-              {#each store.state.detectedPages as pageInfo (pageInfo.index)}
-                <PageThumbnail {store} {pageInfo} />
-              {/each}
-            </div>
-          {/if}
-        </div>
-      {/if}
-    </div>
-  </div>
-
-  {#if store.state.hasPerformedDetection && store.state.detectedPages.length > 0}
-    <div class="border-t border-border p-4 text-center">
       <Button
-        size="lg"
-        variant="destructive"
-        class="px-8 h-11 min-w-50"
-        onclick={() => store.process()}
-        disabled={store.isProcessing ||
-          store.state.detectedPages.filter((p) => p.isSelected).length === 0}
+        variant="outline"
+        class="mt-4 w-full rounded-sm"
+        onclick={() => store.detectBlankPages()}
+        disabled={store.state.isDetecting || store.isProcessing}
       >
-        {#if store.isProcessing}
-          <Loader2 class="animate-spin mr-2" size={18} /> {store.progress}
+        {#if store.state.isDetecting}
+          <LoaderCircle class="size-3.5 animate-spin" />
+          {store.progress}
         {:else}
-          Remove Selected Pages <Zap size={18} class="ml-2 fill-current" />
+          <Search class="size-3.5" />
+          Detect blank pages
         {/if}
       </Button>
-    </div>
-  {/if}
+    </ToolPanel>
+
+    {#if store.state.hasPerformedDetection}
+      <ToolPanel
+        title="Results"
+        counter={store.state.detectedPages.length}
+      >
+        {#if store.state.detectedPages.length === 0}
+          <div
+            class="flex flex-col items-center gap-3 rounded-sm border border-dashed border-border/60 bg-muted/20 px-6 py-12 text-center"
+          >
+            <span class="inline-flex size-10 items-center justify-center rounded-sm bg-muted/60 text-muted-foreground">
+              <FileQuestion class="size-4" />
+            </span>
+            <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              No blank pages found
+            </p>
+            <p class="max-w-xs text-xs text-muted-foreground">
+              Try increasing sensitivity if some were missed.
+            </p>
+          </div>
+        {:else}
+          <div
+            class="rounded-sm border border-primary/20 bg-primary/5 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.16em] text-primary"
+          >
+            Found {store.state.detectedPages.length} potentially blank page{store
+              .state.detectedPages.length === 1
+              ? ""
+              : "s"} · click to deselect
+          </div>
+
+          <div
+            class="mt-4 grid max-h-112 grid-cols-2 gap-3 overflow-y-auto rounded-sm border border-border/60 bg-muted/20 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+          >
+            {#each store.state.detectedPages as pageInfo (pageInfo.index)}
+              <PageThumbnail {store} {pageInfo} />
+            {/each}
+          </div>
+        {/if}
+      </ToolPanel>
+    {/if}
+
+    {#if store.state.hasPerformedDetection && store.state.detectedPages.length > 0}
+      <ToolFooter
+        hint={store.isProcessing
+          ? store.progress.text
+          : `${store.state.detectedPages.filter((p) => p.isSelected).length} marked for removal`}
+      >
+        <Button
+          size="lg"
+          variant="destructive"
+          class="rounded-sm px-6 shadow-sm"
+          onclick={() => store.process()}
+          disabled={store.isProcessing ||
+            store.state.detectedPages.filter((p) => p.isSelected).length === 0}
+        >
+          {#if store.isProcessing}
+            <LoaderCircle class="size-4 animate-spin" />
+            {store.progress}
+          {:else}
+            <Zap class="size-4" />
+            Remove selected
+          {/if}
+        </Button>
+      </ToolFooter>
+    {/if}
+  </div>
 {/if}

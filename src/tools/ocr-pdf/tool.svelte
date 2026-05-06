@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import { Label } from "$components/ui/label";
@@ -17,32 +18,31 @@
     ChevronUp,
     ClipboardCopy,
     Download,
-    FileText,
-    Loader2,
+    LoaderCircle,
     ScanText,
     Settings2,
-    Trash2
   } from "@lucide/svelte";
   import { slide } from "svelte/transition";
   import { OcrPdfState } from "./helper.svelte";
 
   const store = new OcrPdfState();
-  
+
   let showAdvanced = $state(false);
   let langSearch = $state("");
   let copied = $state(false);
 
   const filteredLangs = $derived(
-      Object.entries(tesseractLanguages).filter(([code, name]) => 
-          name.toLowerCase().includes(langSearch.toLowerCase()) || 
-          code.toLowerCase().includes(langSearch.toLowerCase())
-      )
+    Object.entries(tesseractLanguages).filter(
+      ([code, name]) =>
+        name.toLowerCase().includes(langSearch.toLowerCase()) ||
+        code.toLowerCase().includes(langSearch.toLowerCase())
+    )
   );
 
   function handleCopy() {
-      store.copyText();
-      copied = true;
-      setTimeout(() => copied = false, 2000);
+    store.copyText();
+    copied = true;
+    setTimeout(() => (copied = false), 2000);
   }
 </script>
 
@@ -53,223 +53,328 @@
     onFilesSelected={(files) => store.loadFile(files)}
   />
 {:else}
-  <div class="sticky top-0 z-20 border-b border-border bg-accent/50 p-4 rounded-lg">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 class="text-sm font-semibold flex items-center gap-2">
-        <FileText size={18} class="text-primary" />
-        {store.file.file.name}
-        <span class="text-xs font-normal text-muted-foreground ml-2">
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.file.file.name}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
+
+    <ToolPanel title="Source">
+      <FileRow name={store.file.file.name}>
+        <span class="font-mono tabular-nums">
           {formatBytes(store.file.originalSize)}
         </span>
-      </h2>
-      <div class="flex items-center gap-2">
-        <Button variant="ghost" onclick={() => store.reset()} disabled={store.isProcessing}>
-          <Trash2 size={16} /> Clear
-        </Button>
-      </div>
-    </div>
-  </div>
+      </FileRow>
+    </ToolPanel>
 
-  <div class="flex-1 overflow-y-auto bg-muted/10 p-4 sm:p-6 space-y-6">
-    <div class="max-w-4xl mx-auto space-y-6">
-      
-      {#if !store.isProcessing && !store.searchablePdfBytes}
-          <div class="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-            <h3 class="text-sm font-semibold flex items-center gap-2 border-b border-border pb-2">
-                Languages in Document
-            </h3>
-            
-            <div class="space-y-2">
-                <div class="relative">
-                    <Input 
-                        type="text" 
-                        placeholder="Search languages..." 
-                        bind:value={langSearch}
-                        class="bg-background shadow-sm"
-                    />
-                </div>
-                
-                <div class="max-h-48 overflow-y-auto border border-border rounded-lg p-2 bg-muted/30 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1">
-                    {#each filteredLangs as [code, name]}
-                        <label class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer text-sm transition-colors">
-                            <input 
-                                type="checkbox" 
-                                value={code}
-                                checked={store.selectedLangs.includes(code)}
-                                onchange={() => store.toggleLanguage(code)}
-                                class="rounded border-border text-primary focus:ring-primary w-4 h-4"
-                            />
-                            {name}
-                        </label>
-                    {/each}
-                </div>
-                <p class="text-xs text-muted-foreground pt-1">
-                    Selected: <span class="font-semibold text-foreground">{store.selectedLangs.map(code => tesseractLanguages[code]).join(', ') || 'None'}</span>
-                </p>
-            </div>
+    {#if !store.isProcessing && !store.searchablePdfBytes}
+      <ToolPanel
+        title="Languages"
+        counter={store.selectedLangs.length}
+      >
+        <div class="flex flex-col gap-3">
+          <Input
+            type="text"
+            placeholder="Search languages…"
+            bind:value={langSearch}
+            class="h-10 rounded-sm font-mono text-sm"
+          />
+          <div
+            class="grid max-h-48 grid-cols-1 gap-1 overflow-y-auto rounded-sm border border-border/60 bg-muted/20 p-2 sm:grid-cols-2 md:grid-cols-3"
+          >
+            {#each filteredLangs as [code, name]}
+              <label
+                class="flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1.5 text-sm transition-colors hover:bg-muted/50"
+              >
+                <input
+                  type="checkbox"
+                  value={code}
+                  checked={store.selectedLangs.includes(code)}
+                  onchange={() => store.toggleLanguage(code)}
+                  class="size-3.5 rounded-xs border-border accent-primary"
+                />
+                <span class="truncate">{name}</span>
+              </label>
+            {/each}
           </div>
+          <p
+            class="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70"
+          >
+            Selected ·
+            <span class="text-foreground">
+              {store.selectedLangs
+                .map((code) => tesseractLanguages[code])
+                .join(", ") || "None"}
+            </span>
+          </p>
+        </div>
+      </ToolPanel>
 
-          <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-            <button 
-                class="flex items-center justify-between w-full text-sm font-semibold text-left"
-                onclick={() => showAdvanced = !showAdvanced}
+      <ToolPanel title="Advanced">
+        <button
+          type="button"
+          onclick={() => (showAdvanced = !showAdvanced)}
+          aria-expanded={showAdvanced}
+          class="flex w-full items-center justify-between gap-2"
+        >
+          <span class="inline-flex items-center gap-2">
+            <Settings2 class="size-3.5 text-primary" />
+            <span
+              class="font-mono text-[11px] uppercase tracking-[0.16em] text-foreground"
             >
-                <div class="flex items-center gap-2">
-                    <Settings2 size={16} class="text-primary"/> Advanced Settings
-                    <span class="text-xs font-normal text-muted-foreground ml-2 hidden sm:inline">(Recommended to improve accuracy)</span>
-                </div>
-                {#if showAdvanced} <ChevronUp size={16} /> {:else} <ChevronDown size={16} /> {/if}
-            </button>
+              Tuning options
+            </span>
+            <span class="hidden font-mono text-[10px] tracking-[0.14em] text-muted-foreground/60 sm:inline">
+              · Recommended
+            </span>
+          </span>
+          {#if showAdvanced}
+            <ChevronUp class="size-3.5 text-muted-foreground" />
+          {:else}
+            <ChevronDown class="size-3.5 text-muted-foreground" />
+          {/if}
+        </button>
 
-            {#if showAdvanced}
-                <div transition:slide class="mt-6 space-y-6 border-t border-border pt-4">
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <Label for="ocr-resolution">Resolution</Label>
-                            <Select type="single" bind:value={store.resolution}>
-                                <SelectTrigger id="ocr-resolution" class="w-full">
-                                    {#if store.resolution === '2.0'} Standard (192 DPI)
-                                    {:else if store.resolution === '3.0'} High (288 DPI)
-                                    {:else} Ultra (384 DPI) {/if}
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="2.0">Standard (192 DPI)</SelectItem>
-                                    <SelectItem value="3.0">High (288 DPI)</SelectItem>
-                                    <SelectItem value="4.0">Ultra (384 DPI)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+        {#if showAdvanced}
+          <div
+            transition:slide={{ duration: 220 }}
+            class="mt-5 flex flex-col gap-5 border-t border-border/60 pt-5"
+          >
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="flex flex-col gap-2">
+                <Label
+                  for="ocr-resolution"
+                  class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+                >
+                  Resolution
+                </Label>
+                <Select type="single" bind:value={store.resolution}>
+                  <SelectTrigger
+                    id="ocr-resolution"
+                    class="h-10 rounded-sm"
+                  >
+                    {#if store.resolution === "2.0"}
+                      Standard · 192 DPI
+                    {:else if store.resolution === "3.0"}
+                      High · 288 DPI
+                    {:else}
+                      Ultra · 384 DPI
+                    {/if}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2.0">Standard · 192 DPI</SelectItem>
+                    <SelectItem value="3.0">High · 288 DPI</SelectItem>
+                    <SelectItem value="4.0">Ultra · 384 DPI</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                        <div class="space-y-2 pt-8">
-                            <label class="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    bind:checked={store.binarize} 
-                                    class="rounded border-border text-primary focus:ring-primary w-4 h-4"
-                                />
-                                Binarize Image 
-                                <span class="text-xs text-muted-foreground ml-1">(Enhances contrast for clean scans)</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <Label for="whitelist-preset">Character Whitelist Preset</Label>
-                            <Select type="single" value={store.whitelistPreset} onValueChange={(v) => store.handlePresetChange(v as string)}>
-                                <SelectTrigger id="whitelist-preset" class="w-full">
-                                    {store.whitelistPreset === 'none' ? 'None (All characters)' : 
-                                     store.whitelistPreset === 'custom' ? 'Custom...' : 
-                                     store.whitelistPreset}
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="none">None (All characters)</SelectItem>
-                                    <SelectItem value="alphanumeric">Alphanumeric + Basic</SelectItem>
-                                    <SelectItem value="numbers-currency">Numbers + Currency</SelectItem>
-                                    <SelectItem value="letters-only">Letters Only</SelectItem>
-                                    <SelectItem value="numbers-only">Numbers Only</SelectItem>
-                                    <SelectItem value="invoice">Invoice/Receipt</SelectItem>
-                                    <SelectItem value="custom">Custom...</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div class="space-y-2">
-                            <Label for="ocr-whitelist">Custom Whitelist</Label>
-                            <Input 
-                                id="ocr-whitelist" 
-                                type="text" 
-                                bind:value={store.customWhitelist}
-                                disabled={store.whitelistPreset !== 'custom' && store.whitelistPreset !== 'none'}
-                                placeholder="e.g. abc123$.,-"
-                                class="font-mono text-sm"
-                            />
-                            <p class="text-[10px] text-muted-foreground">Only these characters will be recognized.</p>
-                        </div>
-                    </div>
-
-                </div>
-            {/if}
-          </div>
-      {/if}
-
-      {#if store.isProcessing}
-          <div class="rounded-xl border border-border bg-card p-8 shadow-sm flex flex-col items-center justify-center space-y-6 text-center">
-            <Loader2 class="animate-spin text-primary" size={48} />
-            <div class="w-full max-w-md space-y-2">
-                <div class="flex justify-between text-sm font-medium">
-                    <span>{store.progressStatus}</span>
-                    <span>{store.progressPercent.toFixed(0)}%</span>
-                </div>
-                <div class="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                    <div class="h-full bg-primary transition-all duration-300" style={`width: ${store.progressPercent}%`}></div>
-                </div>
-            </div>
-            
-            <div class="w-full max-w-md bg-black text-green-400 font-mono text-xs p-3 rounded-md text-left h-32 overflow-y-auto mt-4">
-                {#each store.progressLog as log}
-                    <div>{log}</div>
-                {/each}
-            </div>
-          </div>
-      {/if}
-
-      {#if store.searchablePdfBytes && !store.isProcessing}
-          <div class="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
-            <div class="flex items-center gap-3 pb-4 border-b border-border">
-                <div class="bg-green-500/10 text-green-500 p-2 rounded-full">
-                    <Check size={24} />
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-foreground">OCR Complete</h3>
-                    <p class="text-sm text-muted-foreground">Your searchable PDF and extracted text are ready.</p>
-                </div>
+              <label
+                class="mt-auto flex cursor-pointer items-start gap-3 rounded-sm border border-border/60 bg-muted/20 px-4 py-3 text-sm transition-colors hover:bg-muted/30"
+              >
+                <input
+                  type="checkbox"
+                  bind:checked={store.binarize}
+                  class="mt-0.5 size-3.5 rounded-xs border-border accent-primary"
+                />
+                <span class="flex flex-col gap-0.5">
+                  <span class="font-medium text-foreground">Binarize image</span>
+                  <span class="text-xs text-muted-foreground">
+                    Enhances contrast for clean scans.
+                  </span>
+                </span>
+              </label>
             </div>
 
-            <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                    <Label>Extracted Text</Label>
-                    <Button variant="ghost" size="sm" onclick={handleCopy} class="h-8 text-muted-foreground hover:text-foreground">
-                        {#if copied}
-                            <Check size={14} class="mr-1 text-green-500" /> Copied
-                        {:else}
-                            <ClipboardCopy size={14} class="mr-1" /> Copy Text
-                        {/if}
-                    </Button>
-                </div>
-                <textarea 
-                    readonly
-                    class="w-full h-48 bg-muted/30 border border-border rounded-lg p-4 font-mono text-sm resize-y focus:outline-none"
-                    value={store.extractedText}
-                ></textarea>
-            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="flex flex-col gap-2">
+                <Label
+                  for="whitelist-preset"
+                  class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+                >
+                  Character preset
+                </Label>
+                <Select
+                  type="single"
+                  value={store.whitelistPreset}
+                  onValueChange={(v) => store.handlePresetChange(v as string)}
+                >
+                  <SelectTrigger
+                    id="whitelist-preset"
+                    class="h-10 rounded-sm"
+                  >
+                    {store.whitelistPreset === "none"
+                      ? "None · all characters"
+                      : store.whitelistPreset === "custom"
+                        ? "Custom"
+                        : store.whitelistPreset}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None · all characters</SelectItem>
+                    <SelectItem value="alphanumeric">
+                      Alphanumeric + basic
+                    </SelectItem>
+                    <SelectItem value="numbers-currency">
+                      Numbers + currency
+                    </SelectItem>
+                    <SelectItem value="letters-only">Letters only</SelectItem>
+                    <SelectItem value="numbers-only">Numbers only</SelectItem>
+                    <SelectItem value="invoice">Invoice / receipt</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                <Button variant="outline" size="lg" onclick={() => store.downloadTxt()} class="w-full">
-                    <Download size={16} class="mr-2" /> Download as .txt
-                </Button>
-                <Button variant="dark" size="lg" onclick={() => store.downloadPdf()} class="w-full">
-                    <Download size={16} class="mr-2" /> Download Searchable PDF
-                </Button>
+              <div class="flex flex-col gap-2">
+                <Label
+                  for="ocr-whitelist"
+                  class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+                >
+                  Custom whitelist
+                </Label>
+                <Input
+                  id="ocr-whitelist"
+                  type="text"
+                  bind:value={store.customWhitelist}
+                  disabled={store.whitelistPreset !== "custom" &&
+                    store.whitelistPreset !== "none"}
+                  placeholder="e.g. abc123$.,-"
+                  class="h-10 rounded-sm font-mono text-sm"
+                />
+                <p
+                  class="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60"
+                >
+                  Only listed characters will be recognized.
+                </p>
+              </div>
             </div>
           </div>
-      {/if}
+        {/if}
+      </ToolPanel>
+    {/if}
 
-    </div>
-  </div>
+    {#if store.isProcessing}
+      <ToolPanel title="Processing">
+        <div class="flex flex-col items-center gap-5">
+          <span
+            class="inline-flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary"
+          >
+            <LoaderCircle class="size-4 animate-spin" />
+          </span>
+          <div class="flex w-full max-w-md flex-col gap-2">
+            <div class="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.16em]">
+              <span class="text-muted-foreground">{store.progressStatus}</span>
+              <span class="tabular-nums text-primary">
+                {store.progressPercent.toFixed(0)}%
+              </span>
+            </div>
+            <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
+              <div
+                class="h-full bg-primary transition-all duration-300"
+                style="width: {store.progressPercent}%"
+              ></div>
+            </div>
+          </div>
 
-  {#if !store.isProcessing && !store.searchablePdfBytes}
-      <div class="border-t border-border p-4 text-center">
+          <div
+            class="h-32 w-full max-w-md overflow-y-auto rounded-sm border border-border/60 bg-foreground/95 p-3 text-left font-mono text-[10px] text-success"
+          >
+            {#each store.progressLog as log}
+              <div>{log}</div>
+            {/each}
+          </div>
+        </div>
+      </ToolPanel>
+    {/if}
+
+    {#if store.searchablePdfBytes && !store.isProcessing}
+      <ToolPanel title="Result">
+        <div
+          class="flex items-center gap-3 rounded-sm border border-success/30 bg-success/5 px-4 py-3"
+        >
+          <span
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-sm bg-success/15 text-success"
+          >
+            <Check class="size-4" />
+          </span>
+          <div class="flex flex-col gap-0.5">
+            <h3
+              class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-success"
+            >
+              OCR complete
+            </h3>
+            <p class="text-xs text-muted-foreground">
+              Searchable PDF and extracted text are ready.
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <Label
+              class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              Extracted text
+            </Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onclick={handleCopy}
+              class="rounded-sm text-muted-foreground hover:text-foreground"
+            >
+              {#if copied}
+                <Check class="size-3.5 text-success" />
+                Copied
+              {:else}
+                <ClipboardCopy class="size-3.5" />
+                Copy
+              {/if}
+            </Button>
+          </div>
+          <textarea
+            readonly
+            class="h-48 w-full resize-y rounded-sm border border-border/60 bg-muted/20 p-3 font-mono text-xs focus:outline-none"
+            value={store.extractedText}
+          ></textarea>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            variant="outline"
+            onclick={() => store.downloadTxt()}
+            class="rounded-sm"
+          >
+            <Download class="size-3.5" />
+            Download .txt
+          </Button>
+          <Button
+            onclick={() => store.downloadPdf()}
+            class="rounded-sm bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Download class="size-3.5" />
+            Download searchable PDF
+          </Button>
+        </div>
+      </ToolPanel>
+    {/if}
+
+    {#if !store.isProcessing && !store.searchablePdfBytes}
+      <ToolFooter
+        hint={store.selectedLangs.length === 0
+          ? "Select at least one language"
+          : `Run OCR · ${store.selectedLangs.length} language${store.selectedLangs.length === 1 ? "" : "s"}`}
+      >
         <Button
           size="lg"
-          variant="dark"
-          class="px-8 h-11 min-w-50"
+          class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
           onclick={() => store.process()}
           disabled={store.selectedLangs.length === 0}
         >
-          Start OCR <ScanText size={18} class="ml-2" />
+          <ScanText class="size-4" />
+          Start OCR
         </Button>
-      </div>
-  {/if}
+      </ToolFooter>
+    {/if}
+  </div>
 {/if}
