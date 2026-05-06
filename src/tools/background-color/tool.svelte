@@ -1,10 +1,11 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import { Label } from "$components/ui/label";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { formatBytes } from "$utils/helper";
-  import { FileText, Loader2, PaintBucket, Trash2, Zap } from "@lucide/svelte";
+  import { LoaderCircle, PaintBucket, Zap } from "@lucide/svelte";
   import { BackgroundColorState } from "./helper.svelte";
 
   const store = new BackgroundColorState();
@@ -16,98 +17,105 @@
     onFilesSelected={(files) => store.loadFile(files)}
   />
 {:else}
-  <div
-    class="sticky top-0 z-20 border-b border-border bg-accent/50 p-4 rounded-lg"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 class="text-sm font-semibold flex items-center gap-2">
-        <FileText size={18} class="text-primary" />
-        {store.state.file.name}
-        <span class="text-xs font-normal text-muted-foreground ml-2">
-          {formatBytes(store.state.originalSize)} • {store.state.pageCount} Pages
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
+
+    <ToolPanel title="Source">
+      <FileRow name={store.state.file.name} onRemove={() => store.reset()}>
+        <span class="font-mono tabular-nums">
+          {formatBytes(store.state.originalSize)}
         </span>
-      </h2>
-      <div class="flex items-center gap-2">
-        <Button variant="ghost" onclick={() => store.reset()}>
-          <Trash2 size={16} /> Clear
-        </Button>
-      </div>
-    </div>
-  </div>
+        <span class="text-muted-foreground/40">·</span>
+        <span class="font-mono tabular-nums">
+          {store.state.pageCount} pages
+        </span>
+      </FileRow>
+    </ToolPanel>
 
-  <div class="flex-1 overflow-y-auto bg-muted/10 p-6 space-y-8">
-    <div class="max-w-md mx-auto space-y-8">
-      <div
-        class="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6"
-      >
-        <h3
-          class="text-sm font-semibold flex items-center gap-2 border-b border-border pb-3"
-        >
-          <PaintBucket size={16} class="text-primary" /> Background Options
-        </h3>
+    <ToolPanel title="Background">
+      <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-2">
+          <Label
+            for="page-range"
+            class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Pages to color
+          </Label>
+          <Input
+            id="page-range"
+            type="text"
+            placeholder="e.g. 1-3, 5 — leave blank for all"
+            bind:value={store.state.pageRange}
+            class="h-10 rounded-sm font-mono text-sm"
+          />
+        </div>
 
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <Label for="page-range">Pages to Color</Label>
+        <div class="flex flex-col gap-2">
+          <Label
+            for="bg-color"
+            class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Color
+          </Label>
+          <div class="flex items-center gap-3">
             <Input
-              id="page-range"
-              type="text"
-              placeholder="e.g. 1-3, 5, or leave blank for all"
-              bind:value={store.state.pageRange}
+              id="bg-color"
+              type="color"
+              class="h-12 w-20 cursor-pointer rounded-sm p-1"
+              bind:value={store.state.colorHex}
             />
-            <p class="text-[10px] text-muted-foreground">
-              Specify which pages should receive the background color.
-            </p>
-          </div>
-
-          <div class="space-y-2">
-            <Label for="bg-color">Background Color</Label>
-            <div class="flex items-center gap-3">
-              <Input
-                id="bg-color"
-                type="color"
-                class="w-20 p-1 cursor-pointer h-12"
-                bind:value={store.state.colorHex}
-              />
-              <div class="flex flex-col">
-                <span class="text-sm font-mono uppercase font-medium"
-                  >{store.state.colorHex}</span
-                >
-                <span class="text-xs text-muted-foreground"
-                  >Click the swatch to select a color</span
-                >
-              </div>
+            <div class="flex flex-col gap-0.5">
+              <span class="font-mono text-sm uppercase tabular-nums text-foreground">
+                {store.state.colorHex}
+              </span>
+              <span
+                class="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60"
+              >
+                Click swatch to choose
+              </span>
             </div>
           </div>
         </div>
       </div>
+    </ToolPanel>
 
+    <ToolPanel title="How it works">
       <div
-        class="rounded-lg bg-blue-500/10 p-4 text-xs text-blue-600 dark:text-blue-400 leading-relaxed"
+        class="flex items-start gap-3 rounded-sm border border-border/60 bg-muted/20 px-4 py-3"
       >
-        <p>
-          <strong>How it works:</strong> Most PDF pages have a transparent background.
-          This tool creates a solid color layer and places your existing document
-          on top of it. Scanned documents or pages that already have a solid white
-          background image embedded will block the new color.
+        <span
+          class="inline-flex size-7 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary"
+        >
+          <PaintBucket class="size-3.5" />
+        </span>
+        <p class="text-xs leading-relaxed text-muted-foreground">
+          Most PDF pages are transparent. This tool inserts a solid color layer
+          beneath the existing content. Pages that already contain an opaque
+          white background image will block the new color.
         </p>
       </div>
-    </div>
-  </div>
+    </ToolPanel>
 
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      size="lg"
-      variant="dark"
-      class="px-8 h-11 min-w-50"
-      onclick={() => store.process()}
-      disabled={store.isProcessing}
-    >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin mr-2" size={18} /> Processing...
-      {:else}
-        Apply Background Color <Zap size={18} class="ml-2 fill-current" />
-      {/if}
-    </Button>
+    <ToolFooter hint={store.isProcessing ? "Processing" : "Apply background"}>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.process()}
+        disabled={store.isProcessing}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          Processing
+        {:else}
+          <Zap class="size-4" />
+          Apply background
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

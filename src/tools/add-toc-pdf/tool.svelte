@@ -1,16 +1,30 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
+  import { Button } from "$components/ui/button";
+  import { Input } from "$components/ui/input";
+  import { Label } from "$components/ui/label";
+  import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+  } from "$components/ui/select";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { formatBytes } from "$utils/helper";
-  import {
-    ArrowRight,
-    FileText,
-    Loader2,
-    Settings2,
-    Trash2,
-  } from "@lucide/svelte";
+  import { ArrowRight, BookmarkPlus, LoaderCircle } from "@lucide/svelte";
   import { TableOfContentsState } from "./helper.svelte";
 
   const store = new TableOfContentsState();
+
+  const fontSizes = ["10", "11", "12", "14", "16", "18", "24"];
+  const fontFamilies = [
+    { id: "0", label: "Times Roman" },
+    { id: "1", label: "Times Bold" },
+    { id: "2", label: "Times Italic" },
+    { id: "4", label: "Helvetica" },
+    { id: "5", label: "Helvetica Bold" },
+    { id: "8", label: "Courier" },
+  ];
 </script>
 
 {#if !store.state.file}
@@ -20,132 +34,130 @@
     onFilesSelected={(files) => store.loadFile(files[0])}
   />
 {:else}
-  <div class="flex flex-col h-full">
-    <div class="border-b border-border bg-background/50 p-6 backdrop-blur-sm">
-      <div
-        class="mx-auto flex max-w-2xl items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm"
-      >
-        <div class="flex items-center gap-4 overflow-hidden">
-          <div
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600"
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label="Table of contents"
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
+
+    <ToolPanel title="Source">
+      <FileRow name={store.state.file.name} onRemove={() => store.reset()}>
+        <span class="font-mono tabular-nums">
+          {formatBytes(store.state.file.size)}
+        </span>
+      </FileRow>
+    </ToolPanel>
+
+    <ToolPanel title="Format">
+      <div class="flex flex-col gap-5">
+        <div class="flex flex-col gap-2">
+          <Label
+            for="toc-title"
+            class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
           >
-            <FileText size={20} />
+            TOC title
+          </Label>
+          <Input
+            id="toc-title"
+            type="text"
+            bind:value={store.state.title}
+            class="h-10 rounded-sm font-mono text-sm"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="flex flex-col gap-2">
+            <Label
+              for="font-size"
+              class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              Font size
+            </Label>
+            <Select type="single" bind:value={store.state.fontSize}>
+              <SelectTrigger class="h-10 rounded-sm" id="font-size">
+                {store.state.fontSize}pt
+              </SelectTrigger>
+              <SelectContent>
+                {#each fontSizes as size}
+                  <SelectItem value={size}>{size}pt</SelectItem>
+                {/each}
+              </SelectContent>
+            </Select>
           </div>
-          <div class="min-w-0">
-            <h3 class="truncate text-sm font-medium">
-              {store.state.file.name}
-            </h3>
-            <p class="text-xs text-muted-foreground">
-              {formatBytes(store.state.file.size)}
-            </p>
+
+          <div class="flex flex-col gap-2">
+            <Label
+              for="font-family"
+              class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              Font family
+            </Label>
+            <Select type="single" bind:value={store.state.fontFamily}>
+              <SelectTrigger class="h-10 rounded-sm" id="font-family">
+                {fontFamilies.find((f) => f.id === store.state.fontFamily)
+                  ?.label || "Helvetica"}
+              </SelectTrigger>
+              <SelectContent>
+                {#each fontFamilies as f}
+                  <SelectItem value={f.id}>{f.label}</SelectItem>
+                {/each}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-        <button
-          onclick={() => store.reset()}
-          class="rounded-full p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+
+        <label
+          class="flex cursor-pointer items-start gap-3 rounded-sm border border-border/60 bg-muted/20 px-4 py-3 text-sm transition-colors hover:bg-muted/30"
         >
-          <Trash2 size={18} />
-        </button>
+          <input
+            type="checkbox"
+            bind:checked={store.state.addBookmark}
+            class="mt-0.5 size-3.5 rounded-xs border-border accent-primary"
+          />
+          <span class="flex flex-col gap-0.5">
+            <span class="font-medium text-foreground">
+              Add bookmark entry
+            </span>
+            <span class="text-xs text-muted-foreground">
+              Insert a bookmark pointing to the new TOC page.
+            </span>
+          </span>
+        </label>
       </div>
-    </div>
+    </ToolPanel>
 
-    <div class="flex-1 overflow-y-auto bg-muted/10 p-6">
-      <div class="mx-auto max-w-lg space-y-8">
-        <div
-          class="space-y-6 rounded-xl border border-border bg-card p-6 shadow-sm"
+    <ToolPanel title="Note">
+      <div
+        class="flex items-start gap-3 rounded-sm border border-border/60 bg-muted/20 px-4 py-3"
+      >
+        <span
+          class="inline-flex size-7 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary"
         >
-          <div class="flex items-center gap-2 border-b border-border pb-4 mb-4">
-            <Settings2 size={18} class="text-primary" />
-            <h3 class="font-semibold">Format Options</h3>
-          </div>
-
-          <div class="space-y-2">
-            <label for="toc-title" class="text-sm font-medium"
-              >TOC Page Title</label
-            >
-            <input
-              id="toc-title"
-              type="text"
-              bind:value={store.state.title}
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </div>
-
-          <div class="space-y-2">
-            <label for="font-size" class="text-sm font-medium">Font Size</label>
-            <select
-              id="font-size"
-              bind:value={store.state.fontSize}
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="10">10pt</option>
-              <option value="11">11pt</option>
-              <option value="12">12pt</option>
-              <option value="14">14pt</option>
-              <option value="16">16pt</option>
-              <option value="18">18pt</option>
-              <option value="24">24pt</option>
-            </select>
-          </div>
-
-          <div class="space-y-2">
-            <label for="font-family" class="text-sm font-medium"
-              >Font Family</label
-            >
-            <select
-              id="font-family"
-              bind:value={store.state.fontFamily}
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="0">Times Roman</option>
-              <option value="1">Times Bold</option>
-              <option value="2">Times Italic</option>
-              <option value="4">Helvetica</option>
-              <option value="5">Helvetica Bold</option>
-              <option value="8">Courier</option>
-            </select>
-          </div>
-
-          <div class="flex items-center space-x-2 pt-2">
-            <input
-              type="checkbox"
-              id="add-bookmark"
-              bind:checked={store.state.addBookmark}
-              class="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
-            />
-            <label
-              for="add-bookmark"
-              class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Add bookmark entry for TOC page
-            </label>
-          </div>
-        </div>
-
-        <div
-          class="rounded-lg bg-blue-500/10 p-4 text-xs text-blue-600 dark:text-blue-400"
-        >
-          <p class="font-medium mb-1">Note:</p>
-          <p>
-            This tool uses your existing PDF bookmarks to generate a clickable
-            Table of Contents page at the beginning of the document.
-          </p>
-        </div>
+          <BookmarkPlus class="size-3.5" />
+        </span>
+        <p class="text-xs leading-relaxed text-muted-foreground">
+          The TOC is generated from your existing PDF bookmarks and inserted as
+          a new clickable page at the start of the document.
+        </p>
       </div>
-    </div>
+    </ToolPanel>
 
-    <div class="border-t border-border bg-background p-4 text-center">
-      <button
+    <ToolFooter hint={store.isProcessing ? store.progress : "Generate TOC page"}>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
         onclick={() => store.generateTOC()}
         disabled={store.isProcessing}
-        class="inline-flex h-11 min-w-50 items-center justify-center gap-2 rounded-full bg-primary px-8 text-lg font-semibold text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
       >
         {#if store.isProcessing}
-          <Loader2 class="animate-spin" /> {store.progress}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress}
         {:else}
-          Generate TOC <ArrowRight size={18} />
+          Generate TOC
+          <ArrowRight class="size-4" />
         {/if}
-      </button>
-    </div>
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

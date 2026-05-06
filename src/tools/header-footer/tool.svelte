@@ -1,19 +1,31 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import { Label } from "$components/ui/label";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { formatBytes } from "$utils/helper";
-  import {
-    FileText,
-    LayoutTemplate,
-    Loader2,
-    Trash2,
-    Zap,
-  } from "@lucide/svelte";
+  import { LoaderCircle, Zap } from "@lucide/svelte";
   import { HeaderFooterState } from "./helper.svelte";
 
   const store = new HeaderFooterState();
+
+  type Slot = {
+    label: string;
+    placeholder: string;
+    bind: "headerLeft" | "headerCenter" | "headerRight" | "footerLeft" | "footerCenter" | "footerRight";
+  };
+
+  const headerSlots: Slot[] = [
+    { label: "Left", placeholder: "{page} of {total}", bind: "headerLeft" },
+    { label: "Center", placeholder: "Document title", bind: "headerCenter" },
+    { label: "Right", placeholder: "Date", bind: "headerRight" },
+  ];
+  const footerSlots: Slot[] = [
+    { label: "Left", placeholder: "", bind: "footerLeft" },
+    { label: "Center", placeholder: "- {page} -", bind: "footerCenter" },
+    { label: "Right", placeholder: "", bind: "footerRight" },
+  ];
 </script>
 
 {#if !store.state.file}
@@ -22,165 +34,163 @@
     onFilesSelected={(files) => store.loadFile(files)}
   />
 {:else}
-  <div
-    class="sticky top-0 z-20 border-b border-border bg-accent/50 p-4 rounded-lg"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 class="text-sm font-semibold flex items-center gap-2">
-        <FileText size={18} class="text-primary" />
-        {store.state.file.name}
-        <span class="text-xs font-normal text-muted-foreground ml-2">
-          {formatBytes(store.state.originalSize)} • {store.state.pageCount} Pages
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
+
+    <ToolPanel title="Source">
+      <FileRow name={store.state.file.name} onRemove={() => store.reset()}>
+        <span class="font-mono tabular-nums">
+          {formatBytes(store.state.originalSize)}
         </span>
-      </h2>
-      <div class="flex items-center gap-2">
-        <Button variant="ghost" onclick={() => store.reset()}>
-          <Trash2 size={16} /> Clear
-        </Button>
-      </div>
-    </div>
-  </div>
+        <span class="text-muted-foreground/40">·</span>
+        <span class="font-mono tabular-nums">
+          {store.state.pageCount} pages
+        </span>
+      </FileRow>
+    </ToolPanel>
 
-  <div class="flex-1 overflow-y-auto bg-muted/10 p-6 space-y-8">
-    <div class="max-w-4xl mx-auto space-y-8">
-      <div class="space-y-4">
-        <h3 class="text-sm font-semibold flex items-center gap-2 border-b pb-2">
-          <LayoutTemplate size={16} class="text-primary" /> Formatting Options
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-2">
-            <Label for="page-range">Page Range (optional)</Label>
+    <ToolPanel title="Formatting">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div class="flex flex-col gap-2">
+          <Label
+            for="page-range"
+            class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Page range
+          </Label>
+          <Input
+            id="page-range"
+            type="text"
+            placeholder="e.g. 1-3, 5"
+            bind:value={store.state.pageRange}
+            class="h-10 rounded-sm font-mono text-sm"
+          />
+          <p class="text-xs text-muted-foreground">
+            Leave empty to apply to all pages.
+          </p>
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label
+            for="font-size"
+            class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Font size · pt
+          </Label>
+          <Input
+            id="font-size"
+            type="number"
+            min="6"
+            max="72"
+            bind:value={store.state.fontSize}
+            class="h-10 rounded-sm font-mono text-sm tabular-nums"
+          />
+        </div>
+        <div class="flex flex-col gap-2">
+          <Label
+            for="font-color"
+            class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Color
+          </Label>
+          <div class="flex items-center gap-2">
             <Input
-              id="page-range"
-              type="text"
-              placeholder="e.g., 1-3, 5"
-              bind:value={store.state.pageRange}
+              id="font-color"
+              type="color"
+              class="h-10 w-16 cursor-pointer rounded-sm p-1"
+              bind:value={store.state.fontColor}
             />
-            <p class="text-[10px] text-muted-foreground">
-              Leave empty to apply to all pages.
-            </p>
-          </div>
-          <div class="space-y-2">
-            <Label for="font-size">Font Size (pt)</Label>
-            <Input
-              id="font-size"
-              type="number"
-              min="6"
-              max="72"
-              bind:value={store.state.fontSize}
-            />
-          </div>
-          <div class="space-y-2">
-            <Label for="font-color">Font Color</Label>
-            <div class="flex items-center gap-2">
-              <Input
-                id="font-color"
-                type="color"
-                class="w-16 p-1 cursor-pointer h-10"
-                bind:value={store.state.fontColor}
-              />
-              <span class="text-sm font-mono uppercase text-muted-foreground"
-                >{store.state.fontColor}</span
-              >
-            </div>
+            <span class="font-mono text-xs uppercase tabular-nums text-muted-foreground">
+              {store.state.fontColor}
+            </span>
           </div>
         </div>
       </div>
+    </ToolPanel>
 
-      <div class="space-y-4">
-        <h3 class="text-sm font-semibold border-b pb-2">
-          Header Configuration
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-2">
-            <Label for="header-left">Header Left</Label>
+    <ToolPanel title="Header">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {#each headerSlots as slot}
+          <div class="flex flex-col gap-2">
+            <Label
+              for={`hdr-${slot.bind}`}
+              class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              {slot.label}
+            </Label>
             <Input
-              id="header-left"
+              id={`hdr-${slot.bind}`}
               type="text"
-              placeholder={"{page} of {total}"}
-              bind:value={store.state.headerLeft}
+              placeholder={slot.placeholder}
+              bind:value={store.state[slot.bind]}
+              class="h-10 rounded-sm font-mono text-sm"
             />
           </div>
-          <div class="space-y-2">
-            <Label for="header-center">Header Center</Label>
-            <Input
-              id="header-center"
-              type="text"
-              placeholder="Document Title"
-              bind:value={store.state.headerCenter}
-            />
-          </div>
-          <div class="space-y-2">
-            <Label for="header-right">Header Right</Label>
-            <Input
-              id="header-right"
-              type="text"
-              placeholder="Date"
-              bind:value={store.state.headerRight}
-            />
-          </div>
-        </div>
+        {/each}
       </div>
+    </ToolPanel>
 
-      <div class="space-y-4">
-        <h3 class="text-sm font-semibold border-b pb-2">
-          Footer Configuration
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-2">
-            <Label for="footer-left">Footer Left</Label>
+    <ToolPanel title="Footer">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {#each footerSlots as slot}
+          <div class="flex flex-col gap-2">
+            <Label
+              for={`ftr-${slot.bind}`}
+              class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              {slot.label}
+            </Label>
             <Input
-              id="footer-left"
+              id={`ftr-${slot.bind}`}
               type="text"
-              placeholder=""
-              bind:value={store.state.footerLeft}
+              placeholder={slot.placeholder}
+              bind:value={store.state[slot.bind]}
+              class="h-10 rounded-sm font-mono text-sm"
             />
           </div>
-          <div class="space-y-2">
-            <Label for="footer-center">Footer Center</Label>
-            <Input
-              id="footer-center"
-              type="text"
-              placeholder={"- {page} -"}
-              bind:value={store.state.footerCenter}
-            />
-          </div>
-          <div class="space-y-2">
-            <Label for="footer-right">Footer Right</Label>
-            <Input
-              id="footer-right"
-              type="text"
-              placeholder=""
-              bind:value={store.state.footerRight}
-            />
-          </div>
-        </div>
+        {/each}
       </div>
+    </ToolPanel>
 
-      <div
-        class="rounded-lg bg-blue-500/10 p-4 text-xs text-blue-600 dark:text-blue-400"
+    <ToolPanel title="Variables">
+      <ul
+        class="flex flex-col divide-y divide-border/60 overflow-hidden rounded-sm border border-border/60 bg-muted/20 text-xs"
       >
-        <span class="font-semibold">Dynamic Variables:</span> Use
-        <code>{"{page}"}</code>
-        for the current page number and <code>{"{total}"}</code> for the total page
-        count.
-      </div>
-    </div>
-  </div>
+        {#each [
+          ["{page}", "Current page number"],
+          ["{total}", "Total page count"],
+        ] as [token, body]}
+          <li class="flex items-center gap-3 px-4 py-2.5">
+            <code
+              class="rounded-xs bg-card px-1.5 py-0.5 font-mono text-[10px] text-foreground"
+            >
+              {token}
+            </code>
+            <span class="text-muted-foreground">{body}</span>
+          </li>
+        {/each}
+      </ul>
+    </ToolPanel>
 
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      size="lg"
-      variant="dark"
-      class="px-8 h-11 min-w-50"
-      onclick={() => store.process()}
-      disabled={store.isProcessing}
-    >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin mr-2" size={18} /> Processing...
-      {:else}
-        Apply Header & Footer <Zap size={18} class="ml-2 fill-current" />
-      {/if}
-    </Button>
+    <ToolFooter hint={store.isProcessing ? "Processing" : "Apply header & footer"}>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.process()}
+        disabled={store.isProcessing}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          Processing
+        {:else}
+          <Zap class="size-4" />
+          Apply
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

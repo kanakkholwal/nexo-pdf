@@ -1,18 +1,12 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import { Label } from "$components/ui/label";
   import UploadArea from "$components/ui/UploadArea.svelte";
+  import { cn } from "$lib/utils";
   import { formatBytes } from "$utils/helper";
-  import {
-    ArrowRight,
-    FileText,
-    Hash,
-    LayoutTemplate,
-    Loader2,
-    Trash2,
-    Type,
-  } from "@lucide/svelte";
+  import { ArrowRight, LoaderCircle } from "@lucide/svelte";
   import { PageNumberState, type Position } from "./helper.svelte";
 
   const store = new PageNumberState();
@@ -34,227 +28,202 @@
     onFilesSelected={(files) => store.loadFile(files[0])}
   />
 {:else}
-  <div
-    class="mx-auto flex max-w-2xl items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm"
-  >
-    <div class="flex items-center gap-4 overflow-hidden">
-      <div
-        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600"
-      >
-        <FileText size={20} />
-      </div>
-      <div class="min-w-0">
-        <h3 class="truncate text-sm font-medium">
-          {store.state.file.name}
-        </h3>
-        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{formatBytes(store.state.file.size)}</span>
-          <span>•</span>
-          <span>{store.state.pageCount} Pages</span>
-        </div>
-      </div>
-    </div>
-    <button
-      onclick={() => store.reset()}
-      class="rounded-full p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-    >
-      <Trash2 size={18} />
-    </button>
-  </div>
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
 
-  <div class="flex-1 overflow-y-auto py-6">
-    <div class="mx-auto max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="space-y-4">
+    <ToolPanel title="Source">
+      <FileRow name={store.state.file.name} onRemove={() => store.reset()}>
+        <span class="font-mono tabular-nums">
+          {formatBytes(store.state.file.size)}
+        </span>
+        <span class="text-muted-foreground/40">·</span>
+        <span class="font-mono tabular-nums">
+          {store.state.pageCount} pages
+        </span>
+      </FileRow>
+    </ToolPanel>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <ToolPanel title="Position">
         <div
-          class="rounded-xl border border-border bg-card p-6 shadow-sm h-full"
+          class="relative aspect-3/4 max-h-72 w-full rounded-sm border border-dashed border-border/60 bg-muted/20 p-3"
         >
-          <div class="flex items-center gap-2 border-b border-border pb-4 mb-6">
-            <LayoutTemplate size={18} class="text-primary" />
-            <h3 class="font-semibold">Position</h3>
-          </div>
-
           <div
-            class="aspect-3/4 max-h-75 w-full mx-auto bg-muted/30 border border-dashed border-border rounded-lg relative p-4"
+            class="absolute inset-3 flex flex-col justify-between rounded-sm border border-border/60 bg-card p-3"
           >
+            <div class="flex justify-between">
+              {#each ["top-left", "top-center", "top-right"] as p}
+                <button
+                  type="button"
+                  onclick={() => (store.state.position = p as Position)}
+                  aria-label={p}
+                  aria-pressed={store.state.position === p}
+                  class={cn(
+                    "size-3 rounded-full border-2 transition-all hover:scale-110",
+                    store.state.position === p
+                      ? "border-primary bg-primary"
+                      : "border-border bg-background"
+                  )}
+                ></button>
+              {/each}
+            </div>
+
             <div
-              class="absolute inset-4 bg-card shadow-sm border border-border rounded flex flex-col justify-between p-4"
+              class="text-center font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60"
             >
-              <div class="flex justify-between">
-                <Button
-                  variant={store.state.position === "top-left"
-                    ? "default"
-                    : "outline"}
-                  size="icon-sm"
-                  onclick={() => (store.state.position = "top-left")}
-                  class="rounded-full border-2 transition-all hover:scale-110"
-                ></Button>
-                <Button
-                  onclick={() => (store.state.position = "top-center")}
-                  variant={store.state.position === "top-center"
-                    ? "default"
-                    : "outline"}
-                  size="icon-sm"
-                  class="rounded-full border-2 transition-all hover:scale-110"
-                ></Button>
-                <Button
-                  onclick={() => (store.state.position = "top-right")}
-                  variant={store.state.position === "top-right"
-                    ? "default"
-                    : "outline"}
-                  size="icon-sm"
-                  class="rounded-full border-2 transition-all hover:scale-110"
-                ></Button>
-              </div>
+              Select position
+            </div>
 
-              <div
-                class="text-center text-xs text-muted-foreground select-none"
-              >
-                Select Page Position
-              </div>
-
-              <div class="flex justify-between">
-                <Button
-                  onclick={() => (store.state.position = "bottom-left")}
-                  variant={store.state.position === "bottom-left"
-                    ? "default"
-                    : "outline"}
-                  size="icon-sm"
-                  class="rounded-full border-2 transition-all hover:scale-110"
-                ></Button>
-                <Button
-                  onclick={() => (store.state.position = "bottom-center")}
-                  variant={store.state.position === "bottom-center"
-                    ? "default"
-                    : "outline"}
-                  size="icon-sm"
-                  class="rounded-full border-2 transition-all hover:scale-110"
-                ></Button>
-                <Button
-                  onclick={() => (store.state.position = "bottom-right")}
-                  variant={store.state.position === "bottom-right"
-                    ? "default"
-                    : "outline"}
-                  size="icon-sm"
-                  class="rounded-full border-2 transition-all hover:scale-110"
-                ></Button>
-              </div>
+            <div class="flex justify-between">
+              {#each ["bottom-left", "bottom-center", "bottom-right"] as p}
+                <button
+                  type="button"
+                  onclick={() => (store.state.position = p as Position)}
+                  aria-label={p}
+                  aria-pressed={store.state.position === p}
+                  class={cn(
+                    "size-3 rounded-full border-2 transition-all hover:scale-110",
+                    store.state.position === p
+                      ? "border-primary bg-primary"
+                      : "border-border bg-background"
+                  )}
+                ></button>
+              {/each}
             </div>
           </div>
         </div>
-      </div>
+        <p
+          class="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70"
+        >
+          Active · {store.state.position.replace("-", " ")}
+        </p>
+      </ToolPanel>
 
-      <div class="space-y-6">
-        <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <div class="flex items-center gap-2 border-b border-border pb-4 mb-4">
-            <Hash size={18} class="text-primary" />
-            <h3 class="font-semibold">Format & Range</h3>
-          </div>
-
-          <div class="space-y-4">
-            <div>
-              <label
-                for="format"
-                class="text-xs font-medium text-muted-foreground mb-1 block"
-                >Style</label
-              >
-              <div class="grid grid-cols-2 gap-2">
-                <Button
-                  onclick={() => (store.state.format = "n")}
-                  variant={store.state.format === "n"
-                    ? "default_soft"
-                    : "outline"}
+      <div class="flex flex-col gap-6">
+        <ToolPanel title="Format">
+          <div class="flex flex-col gap-4">
+            <div class="grid grid-cols-2 gap-1 rounded-sm bg-muted/40 p-1">
+              {#each [
+                { id: "n", label: "1, 2, 3…" },
+                { id: "n of x", label: "1 of N" },
+              ] as opt}
+                <button
+                  type="button"
+                  onclick={() => (store.state.format = opt.id as any)}
+                  class={cn(
+                    "rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.16em] transition-colors",
+                    store.state.format === opt.id
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
                 >
-                  1, 2, 3...
-                </Button>
-                <Button
-                  onclick={() => (store.state.format = "n of x")}
-                  variant={store.state.format === "n of x"
-                    ? "default_soft"
-                    : "outline"}
-                >
-                  1 of N
-                </Button>
-              </div>
+                  {opt.label}
+                </button>
+              {/each}
             </div>
 
-            <div>
-              <Label for="start-page" class="text-xs mb-1 block"
-                >Start Numbering From Page</Label
+            <div class="flex flex-col gap-2">
+              <Label
+                for="start-page"
+                class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
               >
+                Start from page
+              </Label>
               <Input
                 id="start-page"
                 type="number"
                 min="1"
                 max={store.state.pageCount}
                 bind:value={store.state.startFromPage}
-                class="h-9 w-full"
+                class="h-10 rounded-sm font-mono text-sm tabular-nums"
               />
             </div>
           </div>
-        </div>
+        </ToolPanel>
 
-        <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <div class="flex items-center gap-2 border-b border-border pb-4 mb-4">
-            <Type size={18} class="text-primary" />
-            <h3 class="font-semibold">Typography</h3>
-          </div>
-
+        <ToolPanel title="Typography">
           <div class="grid grid-cols-2 gap-4">
-            <div>
-              <Label for="font-size" class="text-xs mb-1">Size (pt)</Label>
+            <div class="flex flex-col gap-2">
+              <Label
+                for="font-size"
+                class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                Size · pt
+              </Label>
               <Input
                 id="font-size"
                 type="number"
                 min="6"
                 max="72"
                 bind:value={store.state.fontSize}
-                class="h-9 w-full"
+                class="h-10 rounded-sm font-mono text-sm tabular-nums"
               />
             </div>
-            <div>
-              <Label for="margin" class="text-xs mb-1">Margin (px)</Label>
+            <div class="flex flex-col gap-2">
+              <Label
+                for="margin"
+                class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                Margin · px
+              </Label>
               <Input
                 id="margin"
                 type="number"
                 min="0"
                 max="100"
                 bind:value={store.state.margin}
-                class="h-9 w-full"
+                class="h-10 rounded-sm font-mono text-sm tabular-nums"
               />
             </div>
           </div>
 
-          <div class="mt-4">
-            <Label for="color" class="text-xs mb-1">Color</Label>
-            <div class="flex gap-2 items-center">
+          <div class="mt-4 flex flex-col gap-2">
+            <Label
+              for="color"
+              class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+            >
+              Color
+            </Label>
+            <div class="flex items-center gap-2">
               <Input
                 id="color"
                 type="color"
                 bind:value={store.state.color}
-                class="h-9 w-16 p-1 cursor-pointer"
+                class="h-10 w-16 cursor-pointer rounded-sm p-1"
               />
-              <span class="text-sm font-mono text-muted-foreground uppercase"
-                >{store.state.color}</span
+              <span
+                class="font-mono text-xs uppercase tabular-nums text-muted-foreground"
               >
+                {store.state.color}
+              </span>
             </div>
           </div>
-        </div>
+        </ToolPanel>
       </div>
     </div>
-  </div>
 
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      variant="dark"
-      onclick={() => store.process()}
-      disabled={store.isProcessing}
-      class="inline-flex h-11 min-w-50 px-8"
+    <ToolFooter
+      hint={store.isProcessing ? store.progress : "Add page numbers"}
     >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin" /> {store.progress}
-      {:else}
-        Add Page Numbers <ArrowRight size={18} />
-      {/if}
-    </Button>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.process()}
+        disabled={store.isProcessing}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress}
+        {:else}
+          Add page numbers
+          <ArrowRight class="size-4" />
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

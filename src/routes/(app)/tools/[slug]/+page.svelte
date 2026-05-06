@@ -310,7 +310,7 @@
           Privacy by architecture
         </p>
         <p class="text-xs text-muted-foreground">
-          This tool runs entirely in your browser. Nothing is sent to a server.
+          This tool runs entirely in your {appState.isTauri ? 'device' : 'browser'}. Nothing is sent to a server.
         </p>
       </div>
     </div>
