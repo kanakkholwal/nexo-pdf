@@ -1,14 +1,9 @@
 <script lang="ts">
+  import { ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import UploadArea from "$components/ui/UploadArea.svelte";
-  import {
-    ArrowRight,
-    FileMinus2,
-    Info,
-    Loader2,
-    Trash2,
-  } from "@lucide/svelte";
+  import { ArrowRight, Info, LoaderCircle } from "@lucide/svelte";
   import { DeletePagesState } from "./helper.svelte";
   import PageThumbnail from "./PageThumbnail.svelte";
 
@@ -22,83 +17,81 @@
     onFilesSelected={(files) => store.loadFile(files[0])}
   />
 {:else}
-  <div class="sticky top-0 z-20 border-b border-border px-4 py-3 backdrop-blur">
-    <div
-      class="mx-auto max-w-5xl flex flex-wrap items-center justify-between gap-4"
-    >
-      <div class="flex items-center gap-3 overflow-hidden max-w-50 sm:max-w-xs">
-        <div
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600"
-        >
-          <FileMinus2 size={18} />
-        </div>
-        <div class="min-w-0">
-          <h3 class="truncate text-sm font-medium">{store.state.file.name}</h3>
-          <p class="text-[10px] text-muted-foreground">
-            {store.state.pageCount} Pages
-          </p>
-        </div>
-      </div>
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
 
-      <div class="flex-1 max-w-md flex items-center gap-2">
+    <ToolPanel
+      title="Pages to delete"
+      counter={store.state.pagesToDelete.size}
+    >
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Input
           type="text"
           value={store.state.inputText}
           oninput={(e) => store.handleInputUpdate(e.currentTarget.value)}
           placeholder="e.g. 1, 3-5, 8"
-          class="flex h-9 w-full rounded-md"
+          class="h-10 flex-1 rounded-sm font-mono text-sm"
         />
         {#if store.state.pagesToDelete.size > 0}
-          <span class="text-xs font-bold text-destructive whitespace-nowrap">
-            -{store.state.pagesToDelete.size}
+          <span
+            class="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-destructive/10 px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.16em] text-destructive"
+          >
+            -{store.state.pagesToDelete.size} pages
           </span>
         {/if}
       </div>
+      <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
+        Use commas for separate pages
+        <code class="rounded-xs bg-muted/60 px-1 font-mono text-[10px] text-foreground">1, 3, 5</code>
+        and hyphens for ranges
+        <code class="rounded-xs bg-muted/60 px-1 font-mono text-[10px] text-foreground">1-5</code>.
+      </p>
+    </ToolPanel>
 
-      <Button
-        variant="destructive_soft"
-        onclick={() => store.reset()}
-        size="icon"
-        title="Remove File"
-      >
-        <Trash2 size={18} />
-      </Button>
-    </div>
-  </div>
-
-  <div class="flex-1 overflow-y-auto bg-muted/10 p-4 sm:p-6">
-    <div class="mx-auto max-w-5xl">
+    <ToolPanel title="Pages" counter={store.state.pageCount}>
       {#if store.state.pagesToDelete.size === 0}
         <div
-          class="mb-6 flex items-center justify-center gap-2 text-sm text-muted-foreground bg-background border border-border p-3 rounded-lg shadow-sm w-fit mx-auto"
+          class="mb-4 flex items-center justify-center gap-2 rounded-sm border border-border/60 bg-muted/30 px-4 py-2.5"
         >
-          <Info size={16} class="text-primary" /> Click on pages below or use the
-          input bar to select pages for deletion.
+          <Info class="size-3.5 text-primary" />
+          <p
+            class="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            Click pages to mark for deletion
+          </p>
         </div>
       {/if}
-
-      <div
-        class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
-      >
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {#each Array.from({ length: store.state.pageCount }) as _, i (i)}
           <PageThumbnail {store} index={i} />
         {/each}
       </div>
-    </div>
-  </div>
+    </ToolPanel>
 
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      variant="dark"
-      onclick={() => store.process()}
-      disabled={store.isProcessing || store.state.pagesToDelete.size === 0}
-      class="inline-flex h-11 min-w-50 px-8"
+    <ToolFooter
+      hint={store.isProcessing
+        ? store.progress
+        : `${store.state.pagesToDelete.size} page${store.state.pagesToDelete.size === 1 ? "" : "s"} marked`}
     >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin" /> {store.progress}
-      {:else}
-        Delete Selected Pages <ArrowRight size={18} />
-      {/if}
-    </Button>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.process()}
+        disabled={store.isProcessing || store.state.pagesToDelete.size === 0}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress}
+        {:else}
+          Delete & download
+          <ArrowRight class="size-4" />
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

@@ -1,17 +1,11 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import { Label } from "$components/ui/label";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { formatBytes } from "$utils/helper";
-  import {
-    ArrowRight,
-    FileText,
-    Info,
-    Loader2,
-    SplitSquareHorizontal,
-    Trash2,
-  } from "@lucide/svelte";
+  import { ArrowRight, LoaderCircle } from "@lucide/svelte";
   import { ExtractPagesState } from "./helper.svelte";
 
   const store = new ExtractPagesState();
@@ -24,95 +18,89 @@
     onFilesSelected={(files) => store.loadFile(files[0])}
   />
 {:else}
-  <div class="border-b border-border py-6">
-    <div
-      class="mx-auto flex max-w-2xl items-center justify-between rounded-xl border border-border bg-card p-4 shadow-sm"
-    >
-      <div class="flex items-center gap-4 overflow-hidden">
-        <div
-          class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600"
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    />
+
+    <ToolPanel title="Source">
+      <FileRow name={store.state.file.name}>
+        <span class="font-mono tabular-nums">
+          {formatBytes(store.state.file.size)}
+        </span>
+        <span class="text-muted-foreground/40">·</span>
+        <span class="font-mono tabular-nums">
+          {store.state.pageCount} pages
+        </span>
+      </FileRow>
+    </ToolPanel>
+
+    <ToolPanel title="Pages to extract">
+      <div class="flex flex-col gap-2">
+        <Label
+          for="pages-input"
+          class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
         >
-          <FileText size={20} />
-        </div>
-        <div class="min-w-0">
-          <h3 class="truncate text-sm font-medium">
-            {store.state.file.name}
-          </h3>
-          <div class="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{formatBytes(store.state.file.size)}</span>
-            <span>•</span>
-            <span>{store.state.pageCount} Pages</span>
-          </div>
-        </div>
+          Range
+        </Label>
+        <Input
+          id="pages-input"
+          type="text"
+          bind:value={store.state.pagesToExtract}
+          placeholder="e.g. 1, 3-5, 8"
+          class="h-10 rounded-sm font-mono text-sm"
+        />
+        <p
+          class="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60"
+        >
+          {store.state.pageCount} pages available
+        </p>
       </div>
-      <Button
-        variant="destructive_soft"
-        size="icon-sm"
-        onclick={() => store.reset()}
-      >
-        <Trash2 size={18} />
-      </Button>
-    </div>
-  </div>
 
-  <div class="flex-1 overflow-y-auto bg-muted/10 py-6">
-    <div class="mx-auto max-w-lg space-y-8">
-      <div
-        class="space-y-6 rounded-xl border border-border bg-card p-6 shadow-sm"
+      <ul
+        class="mt-4 flex flex-col divide-y divide-border/60 overflow-hidden rounded-sm border border-border/60 bg-muted/20 text-xs"
       >
-        <div class="flex items-center gap-2 border-b border-border pb-4 mb-4">
-          <SplitSquareHorizontal size={18} class="text-primary" />
-          <h3 class="font-semibold">Extraction Settings</h3>
-        </div>
-
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <Label for="pages-input" class="text-sm font-medium"
-              >Pages to Extract</Label
+        {#each [
+          ["1, 2, 3", "Specific single pages"],
+          ["1-5", "A range of pages"],
+          ["1, 3-5, 8", "Mix of singles and ranges"],
+        ] as [example, body]}
+          <li class="flex items-center gap-3 px-4 py-2.5">
+            <code
+              class="rounded-xs bg-card px-1.5 py-0.5 font-mono text-[10px] text-foreground"
             >
-            <Input
-              id="pages-input"
-              type="text"
-              bind:value={store.state.pagesToExtract}
-              placeholder="e.g. 1, 3-5, 8"
-              class="h-10 w-full rounded-md"
-            />
-            <p class="text-[11px] text-muted-foreground">
-              Total available pages: <strong>{store.state.pageCount}</strong>
-            </p>
-          </div>
+              {example}
+            </code>
+            <span class="text-muted-foreground">{body}</span>
+          </li>
+        {/each}
+      </ul>
+    </ToolPanel>
 
-          <div class="rounded-lg bg-muted/50 p-4 text-xs text-muted-foreground">
-            <div class="flex gap-2 mb-2 font-medium text-foreground">
-              <Info size={14} /> Examples:
-            </div>
-            <ul class="space-y-1 list-disc pl-4">
-              <li>
-                <strong>1, 2, 3</strong> : Extracts specific single pages.
-              </li>
-              <li><strong>1-5</strong> : Extracts a range of pages.</li>
-              <li>
-                <strong>1, 3-5, 8</strong> : Combines single pages and ranges.
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      onclick={() => store.extract()}
-      disabled={store.isProcessing || !store.state.pagesToExtract}
-      variant="dark"
-      class="h-11 min-w-50 px-8"
+    <ToolFooter
+      hint={store.isProcessing
+        ? store.progress
+        : store.state.pagesToExtract
+          ? `Extract ${store.state.pagesToExtract}`
+          : "Enter a range to begin"}
     >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin" /> {store.progress}
-      {:else}
-        Extract Pages <ArrowRight size={18} />
-      {/if}
-    </Button>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.extract()}
+        disabled={store.isProcessing || !store.state.pagesToExtract}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress}
+        {:else}
+          Extract pages
+          <ArrowRight class="size-4" />
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}
