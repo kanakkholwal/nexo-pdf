@@ -2,6 +2,94 @@
 
 @import 'tw-animate-css';
 
+/* motion-core:tokens:start */
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --base-hue: 265;
+
+  --radius-base: 0.275rem;
+
+  --background-inset: oklch(0.9764 0.0013 var(--base-hue));
+  --background: oklch(1 0 0);
+  --background-muted: oklch(0.956 0.002 var(--base-hue));
+  --fixed-light: oklch(1 0 0);
+  --fixed-dark: oklch(0.183 0.006 var(--base-hue));
+  --foreground: oklch(0.1881 0.006 var(--base-hue));
+  --foreground-muted: oklch(0.5493 0.0081 var(--base-hue));
+  --accent: oklch(0.6996 0.201959 44.4414);
+  --accent-secondary: oklch(0.5096 0.151959 44.4414);
+  --border: oklch(0.4224 0.0013 var(--base-hue) / 0.1);
+
+  --shadow-xs: 0px 1px 1px -0.5px rgba(0, 0, 0, 0.06);
+  --shadow-sm:
+    0px 1px 1px -0.5px rgba(0, 0, 0, 0.06),
+    0px 3px 3px -1.5px rgba(0, 0, 0, 0.06);
+  --shadow-md:
+    0px 1px 1px -0.5px rgba(0, 0, 0, 0.06),
+    0px 3px 3px -1.5px rgba(0, 0, 0, 0.06), 0px 6px 6px -3px rgba(0, 0, 0, 0.06);
+  --shadow-lg:
+    0px 1px 1px -0.5px rgba(0, 0, 0, 0.06),
+    0px 3px 3px -1.5px rgba(0, 0, 0, 0.06),
+    0px 6px 6px -3px rgba(0, 0, 0, 0.06), 0px 12px 12px -6px rgba(0, 0, 0, 0.06);
+  --shadow-xl:
+    0px 1px 1px -0.5px rgba(0, 0, 0, 0.06),
+    0px 3px 3px -1.5px rgba(0, 0, 0, 0.06),
+    0px 6px 6px -3px rgba(0, 0, 0, 0.06),
+    0px 12px 12px -6px rgba(0, 0, 0, 0.06),
+    0px 24px 24px -12px rgba(0, 0, 0, 0.06);
+  --shadow-2xl:
+    0px 1px 1px -0.5px rgba(0, 0, 0, 0.06),
+    0px 3px 3px -1.5px rgba(0, 0, 0, 0.06),
+    0px 6px 6px -3px rgba(0, 0, 0, 0.06),
+    0px 12px 12px -6px rgba(0, 0, 0, 0.06),
+    0px 24px 24px -12px rgba(0, 0, 0, 0.06),
+    0px 48px 48px -24px rgba(0, 0, 0, 0.06);
+}
+
+.dark {
+  --background-inset: oklch(0.2099 0.0039 var(--base-hue));
+  --background: oklch(0.2574 0.0056 var(--base-hue));
+  --background-muted: oklch(0.283 0.0091 var(--base-hue));
+  --foreground: oklch(0.9674 0.0013 var(--base-hue));
+  --foreground-muted: oklch(0.669 0.0107 var(--base-hue));
+  --accent: oklch(0.6996 0.181959 44.4414);
+  --accent-secondary: oklch(0.5096 0.131959 44.4414);
+  --border: oklch(0.999 0.013 var(--base-hue) / 0.05);
+}
+
+@theme {
+  --color-fixed-light: var(--fixed-light);
+  --color-fixed-dark: var(--fixed-dark);
+  --color-background-inset: var(--background-inset);
+  --color-background: var(--background);
+  --color-background-muted: var(--background-muted);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-accent: var(--accent);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-border: var(--border);
+
+  --radius-xs: calc(var(--radius-base) * 1);
+  --radius-sm: calc(var(--radius-base) * 2);
+  --radius-md: calc(var(--radius-base) * 3);
+  --radius-lg: calc(var(--radius-base) * 4);
+  --radius-xl: calc(var(--radius-base) * 6);
+  --radius-2xl: calc(var(--radius-base) * 8);
+  --radius-3xl: calc(var(--radius-base) * 12);
+  --radius-4xl: calc(var(--radius-base) * 16);
+  --radius-full: 9999px;
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+}
+
+/* motion-core:tokens:end */
+
 @custom-variant dark (&:where([data-theme="dark"], .dark, .dark *, [data-theme="dark"] *));
 
 :root,
@@ -481,4 +569,60 @@ body {
   background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
   mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+}
+
+.scrollbar-transparent,html {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in srgb, var(--foreground) 15%, transparent) transparent;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+}
+
+.scrollbar-transparent::-webkit-scrollbar {
+  width: 8px;
+  height: 8px
+}
+
+.scrollbar-transparent::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: .5rem
+}
+
+.scrollbar-transparent::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, hsl(var(--primary) / .6), hsl(var(--secondary) / .8));
+  border: 2px solid hsl(var(--background));
+  border-radius: .5rem;
+  transition: all .2s ease-in-out
+}
+
+.scrollbar-transparent::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, hsl(var(--primary) / .8), hsl(var(--secondary) / 1));
+  transform: scale(1.1)
+}
+
+.scrollbar-transparent::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))
+}
+
+.scrollbar-transparent::-webkit-scrollbar-corner {
+  background: hsl(var(--background))
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+li:has([class]) {
+  list-style: none;
 }

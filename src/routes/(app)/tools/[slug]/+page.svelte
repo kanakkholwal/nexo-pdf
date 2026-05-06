@@ -1,29 +1,32 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { fade } from "svelte/transition";
-
   import AdUnit from "$components/AdUnit.svelte";
   import ShareButton from "$components/application/ShareButton.svelte";
-  import DownloadIcon from "$components/icons/registry/DownloadIcon.svelte";
   import Seo from "$components/Seo.svelte";
   import { Button } from "$components/ui/button";
   import { config } from "$constants/app";
+  import { toolsCategories } from "$constants/tools";
+  import { cn } from "$lib/utils";
   import { appState } from "$stores/app-state.svelte";
   import {
     ArrowUpRight,
     ChevronLeft,
+    CircleAlert,
+    DownloadIcon,
     Github,
-    Info,
-    Loader2,
+    LoaderCircle,
     Share2,
     ShieldCheck,
   } from "@lucide/svelte";
   import type { Component } from "svelte";
+  import { cubicOut } from "svelte/easing";
+  import { fade, fly } from "svelte/transition";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
 
   const tool = $derived(data.tool);
+  let isTauri = $derived(appState.isTauri);
 
   let ToolComponent: Component | null = $state(null);
   let loading = $state(true);
@@ -33,7 +36,6 @@
     loading = true;
     ToolComponent = null;
     error = false;
-
     tool
       .component()
       .then((mod) => {
@@ -45,6 +47,12 @@
       })
       .finally(() => (loading = false));
   });
+
+  let categoryName = $derived(
+    toolsCategories.find((c) => c.id === tool.category)?.name ??
+      tool.category ??
+      "Utility"
+  );
 </script>
 
 {#if tool}
@@ -53,248 +61,257 @@
     description={tool.description}
     keywords={tool?.keywords}
   />
-{/if}
 
-{#if tool}
-  <div class="min-h-screen w-full" in:fade>
-    <div class="px-2 pb-20 sm:px-6 lg:px-8">
-      <nav class="mb-8 flex items-center justify-between">
-        <Button
-          variant="ghost"
+  <div class="min-h-screen w-full" in:fade={{ duration: 220 }}>
+    <div class="flex flex-col gap-12 px-3 pb-[max(env(safe-area-inset-bottom),2rem)] pt-2 sm:px-5 sm:pt-4">
+      <nav
+        class="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-5"
+        aria-label="Tool toolbar"
+        in:fly={{ y: 8, duration: 380, easing: cubicOut }}
+      >
+        <a
           href="/explore"
-          class="group text-muted-foreground hover:text-foreground hover:bg-transparent!"
+          class="group inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
         >
           <ChevronLeft
-            class="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
+            class="size-3.5 transition-transform duration-300 group-hover:-translate-x-0.5"
           />
-          Back to Directory
-        </Button>
+          Back to library
+        </a>
 
-        <div class="inline-flex gap-2 items-center flex-wrap">
+        <div class="flex flex-wrap items-center gap-1.5">
           <Button
-            variant="dark"
+            variant="ghost"
             size="sm"
             href={config.github}
             target="_blank"
             rel="noopener noreferrer"
+            class="rounded-sm text-muted-foreground hover:text-foreground"
           >
             <Github class="size-3.5" />
-            <span class="hidden md:inline-block">Star on Github</span>
+            <span class="hidden sm:inline">GitHub</span>
           </Button>
-          <Button
-            variant="dark"
-            size="sm"
-            href="/download"
-            hidden={appState.isTauri}
-      
-          >
-            <DownloadIcon class="size-3.5" />
-            <span class="hidden md:inline-block">Download App</span>
-          </Button>
+          {#if !isTauri}
+            <Button
+              variant="ghost"
+              size="sm"
+              href="/download"
+              class="rounded-sm text-muted-foreground hover:text-foreground"
+            >
+              <DownloadIcon class="size-3.5" />
+              <span class="hidden sm:inline">Desktop</span>
+            </Button>
+          {/if}
           <ShareButton
             data={{
               title: tool.title,
               text: `Check out this PDF tool: ${tool.title}`,
               url: page.url.href,
             }}
-            variant="dark"
+            variant="outline"
             size="sm"
+            class="rounded-sm"
           >
             <Share2 class="size-3.5" />
-            Share
+            <span class="hidden sm:inline">Share</span>
           </ShareButton>
         </div>
       </nav>
 
-      <div class="flex w-full min-w-0 flex-col gap-8">
-        {#key tool.slug}
-          <AdUnit adSlot="display-horizontal" />
-        {/key}
+      <header
+        class="flex flex-col gap-5"
+        in:fly={{ y: 10, duration: 480, delay: 60, easing: cubicOut }}
+      >
+        <div class="flex flex-wrap items-center gap-3">
+          <span
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-primary"
+          >
+            Tool
+          </span>
+          <span class="text-muted-foreground/40">·</span>
+          <span
+            class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            {categoryName}
+          </span>
+          <span class="text-muted-foreground/40">·</span>
+          <span class="inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground/80">
+            <ShieldCheck class="size-3 text-primary" />
+            Client-side
+          </span>
+        </div>
 
-        <header
-          class="flex flex-col items-start gap-8 px-2 sm:flex-row sm:items-center"
-        >
-          <div class="relative shrink-0 group hidden md:block">
-            <div
-              class="absolute inset-0 rounded-full bg-primary/20 blur-2xl opacity-50 transition-opacity group-hover:opacity-70"
-            ></div>
-            <div
-              class="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-4xl border border-border bg-card/80 shadow-xl backdrop-blur-md md:h-28 md:w-28"
-            >
-              {#if tool.icon}
-                {@const Icon = tool.icon}
-                <Icon size={48} class={tool.color || "text-foreground"} />
-              {/if}
-            </div>
+        <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+          <div
+            class="hidden size-14 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary sm:inline-flex"
+          >
+            {#if tool.icon}
+              {@const Icon = tool.icon}
+              <Icon class="size-6" />
+            {/if}
           </div>
 
-          <div class="flex-1 space-y-4">
-            <div class="flex flex-wrap items-center gap-2">
-              <span
-                class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary"
-              >
-                {tool.category ?? "Utility"}
-              </span>
-              <div
-                class="flex items-center rounded-full border border-green-200 bg-green-50 px-2 py-1 text-xs font-medium text-green-600 dark:border-green-900/30 dark:bg-green-900/20 dark:text-green-400"
-              >
-                <ShieldCheck class="mr-1 h-3 w-3" />
-                Client-Side Secure
-              </div>
-            </div>
-
+          <div class="flex flex-col gap-3">
             <h1
-              class="text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-linear-to-b from-foreground to-foreground/60 md:text-5xl"
+              class="text-3xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl"
             >
               {tool.title}
             </h1>
-
-            <p
-              class="max-w-4xl text-base leading-relaxed text-muted-foreground"
-            >
+            <p class="max-w-2xl text-base leading-relaxed text-muted-foreground">
               {tool.description}
             </p>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <section class="mt-4 w-full max-w-app min-h-100 relative">
-          {#if loading}
-            <div
-              in:fade={{ duration: 200 }}
-              out:fade={{ duration: 200 }}
-              class="absolute inset-0 w-full h-100 rounded-3xl border-2 border-border bg-card/50 backdrop-blur-sm flex flex-col items-center justify-center"
-            >
-              <div
-                class="flex flex-col items-center gap-4 opacity-50 animate-pulse"
-              >
-                <div
-                  class="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center"
-                >
-                  <Loader2 class="size-8 animate-spin text-primary" />
-                </div>
-                <div class="space-y-2 text-center">
-                  <div class="h-4 w-48 bg-muted/50 rounded mx-auto"></div>
-                  <div class="h-3 w-32 bg-muted/30 rounded mx-auto"></div>
-                </div>
-                <div class="h-10 w-36 bg-muted/50 rounded-full mt-4"></div>
-              </div>
-            </div>
-          {:else if error}
-            <div
-              in:fade={{ duration: 200 }}
-              class="absolute inset-0 w-full h-100 rounded-3xl border-2 border-destructive/20 bg-destructive/5 backdrop-blur-sm flex flex-col items-center justify-center"
-            >
-              <div class="flex flex-col items-center gap-4 text-center px-6">
-                <div
-                  class="h-20 w-20 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="size-8 text-destructive"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                </div>
-                <div class="space-y-1">
-                  <p class="text-sm font-semibold text-foreground">
-                    Failed to load tool
-                  </p>
-                  <p class="text-xs text-muted-foreground max-w-xs">
-                    Something went wrong while loading <strong
-                      >{tool.title}</strong
-                    >. Please try refreshing the page or come back later.
-                  </p>
-                </div>
-                <div class="flex gap-2 mt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onclick={() => window.location.reload()}
-                    class="rounded-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  >
-                    Try again
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    href="/explore"
-                    class="rounded-full text-muted-foreground hover:text-foreground"
-                  >
-                    Browse other tools
-                  </Button>
-                </div>
-              </div>
-            </div>
-          {:else if ToolComponent}
-            <div in:fade={{ duration: 300, delay: 100 }}>
-              <ToolComponent />
-            </div>
-          {/if}
-        </section>
+      {#key tool.slug}
+        <AdUnit adSlot="display-horizontal" />
+      {/key}
 
-        <div class="mt-8">
-          <div class="mb-6 flex items-center gap-4">
-            <span
-              class="px-2 text-xs font-bold uppercase tracking-widest text-muted-foreground"
-              >Recommended</span
-            >
-            <div class="h-px flex-1 bg-border"></div>
-          </div>
-          {#key tool.slug}
-            <AdUnit adSlot="multiplex_horizontal" />
-          {/key}
+      <section
+        aria-label="Tool workspace"
+        class="relative min-h-104"
+        in:fly={{ y: 12, duration: 520, delay: 120, easing: cubicOut }}
+      >
+        {#if loading}
           <div
-            class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+            in:fade={{ duration: 200 }}
+            out:fade={{ duration: 200 }}
+            class="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-md border border-dashed border-border/60 bg-muted/20"
           >
-            {#each data.recommended as tool}
-              <a
-                href={`/tools/${tool.slug}`}
-                class="group flex flex-col justify-between p-5 rounded-xl border border-border bg-card/80 hover:bg-secondary/80 transition-colors relative overflow-hidden"
+            <span class="inline-flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary">
+              <LoaderCircle class="size-4 animate-spin" />
+            </span>
+            <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              Loading tool
+            </p>
+            <p class="text-sm text-muted-foreground">
+              Spinning up the {tool.title.toLowerCase()} workspace…
+            </p>
+          </div>
+        {:else if error}
+          <div
+            in:fade={{ duration: 200 }}
+            class="absolute inset-0 flex flex-col items-center justify-center gap-4 rounded-md border border-destructive/30 bg-destructive/5 px-6 text-center"
+          >
+            <span class="inline-flex size-10 items-center justify-center rounded-sm bg-destructive/10 text-destructive">
+              <CircleAlert class="size-4" />
+            </span>
+            <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-destructive">
+              Failed to load
+            </p>
+            <p class="max-w-sm text-sm text-muted-foreground">
+              Something went wrong while loading
+              <span class="font-medium text-foreground">{tool.title}</span>.
+              Refresh or pick another tool.
+            </p>
+            <div class="mt-2 flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onclick={() => window.location.reload()}
+                class="rounded-sm"
               >
-                <div class="flex items-start justify-between mb-4">
-                  <div
-                    class={`p-2.5 rounded-lg ${tool.color} bg-opacity-10 text-current`}
+                Try again
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                href="/explore"
+                class="rounded-sm text-muted-foreground hover:text-foreground"
+              >
+                Browse tools
+              </Button>
+            </div>
+          </div>
+        {:else if ToolComponent}
+          <div in:fade={{ duration: 280, delay: 60 }}>
+            <ToolComponent />
+          </div>
+        {/if}
+      </section>
+
+      <section class="flex flex-col gap-6">
+        <div class="flex items-baseline justify-between gap-3 border-b border-border/60 pb-3">
+          <span class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Recommended
+          </span>
+          <span class="font-mono text-[11px] tabular-nums text-muted-foreground/50">
+            {String(data.recommended.length).padStart(2, "0")}
+          </span>
+        </div>
+
+        {#key tool.slug}
+          <AdUnit adSlot="multiplex_horizontal" />
+        {/key}
+
+        <ul
+          class="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {#each data.recommended as rec, i (rec.slug)}
+            {@const Icon = rec.icon}
+            <li>
+              <a
+                href={`/tools/${rec.slug}`}
+                class="group flex h-full flex-col gap-4 bg-card p-5 transition-colors duration-300 hover:bg-muted/40 active:scale-[0.99]"
+                in:fly={{
+                  y: 8,
+                  duration: 360,
+                  delay: 60 + i * 40,
+                  easing: cubicOut,
+                }}
+              >
+                <div class="flex items-start justify-between gap-3">
+                  <span
+                    class="inline-flex size-8 items-center justify-center rounded-sm bg-primary/10 text-primary transition-colors group-hover:bg-primary/15"
                   >
-                    {#if tool.icon}
-                      {@const Icon = tool.icon}
-                      <Icon size={20} />
-                    {/if}
-                  </div>
+                    {#if Icon}<Icon size={16} />{/if}
+                  </span>
+                  <span
+                    class="font-mono text-[10px] tabular-nums text-muted-foreground/50"
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                </div>
+                <div class="flex flex-1 flex-col gap-1.5">
+                  <h3 class="text-base font-medium tracking-tight text-foreground">
+                    {rec.title}
+                  </h3>
+                  <p class="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                    {rec.description}
+                  </p>
+                </div>
+                <div
+                  class={cn(
+                    "flex items-center justify-between border-t border-border/40 pt-3"
+                  )}
+                >
+                  <span
+                    class="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60 transition-colors group-hover:text-primary"
+                  >
+                    Open
+                  </span>
                   <ArrowUpRight
-                    size={18}
-                    class="text-muted-foreground opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    class="size-3.5 text-muted-foreground/50 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
                   />
                 </div>
-
-                <div>
-                  <h3 class="font-bold text-foreground mb-1">{tool.title}</h3>
-                  <p
-                    class="text-xs text-muted-foreground line-clamp-2 leading-relaxed"
-                  >
-                    {tool.description}
-                  </p>
-                </div>
               </a>
-            {/each}
-          </div>
-        </div>
+            </li>
+          {/each}
+        </ul>
+      </section>
 
-        <div class="py-10 text-center">
-          <div
-            class="inline-flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-xs font-medium text-muted-foreground"
-          >
-            <Info class="h-3.5 w-3.5" />
-            This tool runs entirely in your browser. No data is sent to our servers.
-          </div>
-        </div>
+      <div
+        class="mt-2 flex flex-col items-center gap-2 border-t border-border/60 pt-8 text-center"
+      >
+        <p
+          class="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60"
+        >
+          Privacy by architecture
+        </p>
+        <p class="text-xs text-muted-foreground">
+          This tool runs entirely in your browser. Nothing is sent to a server.
+        </p>
       </div>
     </div>
   </div>

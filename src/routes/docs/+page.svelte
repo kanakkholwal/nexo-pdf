@@ -4,374 +4,424 @@
   import Seo from "$components/Seo.svelte";
   import { Button } from "$components/ui/button";
   import { config, faqs } from "$constants/app";
+  import { cn } from "$lib/utils";
   import { toolList } from "$tools/list";
   import {
-    ArrowRight,
-    BookOpen,
-    Download,
+    ArrowUpRight,
     Github,
-    Infinity,
-    MonitorSmartphone,
+    Infinity as InfinityIcon,
     Shield,
     WifiOff,
     Zap,
   } from "@lucide/svelte";
+  import { cubicOut } from "svelte/easing";
+  import { fly } from "svelte/transition";
 
+  const sections = [
+    { id: "getting-started", label: "Getting started" },
+    { id: "installation", label: "Installation" },
+    { id: "tools", label: "Tools" },
+    { id: "privacy", label: "Privacy" },
+    { id: "faq", label: "FAQ" },
+  ];
 
+  const guarantees = [
+    {
+      icon: Shield,
+      title: "100% private",
+      body: "Files never leave your device. Every operation runs locally in your browser or app shell.",
+    },
+    {
+      icon: Zap,
+      title: "Native speed",
+      body: "WebAssembly engines deliver desktop-grade performance, even on hundred-page documents.",
+    },
+    {
+      icon: WifiOff,
+      title: "Offline ready",
+      body: "Works in airplane mode once loaded. The desktop app needs no network at all.",
+    },
+    {
+      icon: InfinityIcon,
+      title: "No limits",
+      body: "Process files of any size. Constraints are your machine's, not ours.",
+    },
+  ];
 
+  const installSteps = [
+    {
+      label: "01",
+      title: "Open the web app",
+      body: "Visit the home page. Tools load instantly and remain available offline as a PWA.",
+    },
+    {
+      label: "02",
+      title: "Download the desktop build",
+      body: "Pick the installer for your OS from GitHub Releases — Windows (.msi/.exe), macOS (.dmg), or Linux (.AppImage/.deb).",
+    },
+    {
+      label: "03",
+      title: "Launch and pin",
+      body: "Open the app, pin it to your dock or taskbar, and you have a permanent local PDF workshop.",
+    },
+  ];
 
+  const privacyPoints = [
+    {
+      title: "Local processing",
+      body: "Every transformation runs on your CPU. There is no server roundtrip, by design.",
+    },
+    {
+      title: "No analytics on contents",
+      body: "We never inspect, log, or fingerprint document contents. Anonymous usage signals are opt-in.",
+    },
+    {
+      title: "Audit-ready",
+      body: "The full source is on GitHub. Reviewers can verify every claim against the code.",
+    },
+  ];
 </script>
+
 <Seo
-  title="Documentation & User Guide"
-  description="Learn how to use our free, privacy-first PDF toolkit to manage your documents. Quick start guide, installation instructions, tool overviews, and FAQ."
+  title="Documentation"
+  description="Get started with Orbit PDF — installation, tools, privacy, and answers to common questions."
   keywords={[
-    "PDF tools documentation",
-    "free PDF editor offline",
-    "how to edit PDF locally",
-    "PDF toolkit user guide",
-    "open source PDF app",
+    "orbit pdf docs",
+    "pdf toolkit guide",
+    "offline pdf editor docs",
   ]}
 />
-
 
 <div class="relative flex min-h-screen w-full flex-col">
   <Navbar />
 
   <div
-    class="max-w-6xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-16 pt-24 pb-20 md:pt-32 px-5 md:px-10"
+    class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-5 pb-24 pt-32 md:flex-row md:gap-16 md:px-8 md:pt-40"
   >
-    <aside class="md:w-64 shrink-0">
-      <div class="sticky top-28 space-y-8">
-        <div>
-          <h3
-            class="text-sm font-bold text-foreground uppercase tracking-wider mb-4 flex items-center gap-2"
+    <aside class="md:w-56 md:shrink-0">
+      <div class="sticky top-32 flex flex-col gap-6">
+        <div
+          class="flex items-baseline justify-between border-b border-border/60 pb-3"
+        >
+          <span
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
           >
-            <BookOpen size={16} class="text-primary" />
-            Quick Navigation
-          </h3>
-          <nav class="flex flex-col space-y-1.5">
-            <a
-              href="#getting-started"
-              class="text-muted-foreground hover:text-primary hover:bg-primary/5 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >Getting Started</a
-            >
-            <a
-              href="#installation"
-              class="text-muted-foreground hover:text-primary hover:bg-primary/5 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >Installation</a
-            >
-            <a
-              href="#available-tools"
-              class="text-muted-foreground hover:text-primary hover:bg-primary/5 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >Available Tools</a
-            >
-            <a
-              href="#privacy-security"
-              class="text-muted-foreground hover:text-primary hover:bg-primary/5 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >Privacy & Security</a
-            >
-            <a
-              href="#faq"
-              class="text-muted-foreground hover:text-primary hover:bg-primary/5 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >FAQ</a
-            >
-          </nav>
+            On this page
+          </span>
         </div>
+        <nav class="flex flex-col">
+          {#each sections as s, i}
+            <a
+              href={`#${s.id}`}
+              class={cn(
+                "group flex items-baseline justify-between border-b border-border/40 py-2.5 text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground"
+              )}
+            >
+              <span class="relative">
+                {s.label}
+                <span
+                  aria-hidden="true"
+                  class="absolute -bottom-0.5 left-0 h-px w-0 bg-foreground transition-[width] duration-300 ease-out group-hover:w-full"
+                ></span>
+              </span>
+              <span
+                class="font-mono text-[10px] tabular-nums text-muted-foreground/50"
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+            </a>
+          {/each}
+        </nav>
       </div>
     </aside>
 
-    <main class="flex-1 space-y-16">
-      <header class="space-y-4 border-b border-border pb-10">
-        <h1
-          class="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground"
+    <main class="flex-1">
+      <header
+        class="flex flex-col gap-5 border-b border-border/60 pb-12"
+        in:fly={{ y: 12, duration: 500, easing: cubicOut }}
+      >
+        <span
+          class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-primary"
         >
           Documentation
+        </span>
+        <h1
+          class="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl"
+        >
+          Build with confidence,
+          <span class="text-primary">work in private.</span>
         </h1>
-        <p class="text-lg text-muted-foreground leading-relaxed max-w-2xl">
-          Learn how to use our toolkit to manage, convert, and edit your PDF
-          documents with complete privacy and offline control.
+        <p class="max-w-2xl text-base leading-relaxed text-muted-foreground">
+          Everything you need to install, integrate, and trust {config.appName}
+          — written for engineers, designed for everyone.
         </p>
       </header>
 
-      <section id="getting-started" class="scroll-mt-32 space-y-6">
-        <h2
-          class="text-2xl font-bold text-foreground border-b border-border/50 pb-2"
+      <section
+        id="getting-started"
+        class="mt-20 scroll-mt-32"
+      >
+        <div
+          class="mb-8 flex items-baseline justify-between border-b border-border/60 pb-4"
         >
-          Getting Started
-        </h2>
-        <p class="text-muted-foreground leading-relaxed">
-          Our application is a powerful, privacy-first PDF toolkit that runs
-          entirely on your device. No installation is required to start—just
-          visit the web app and drop your files.
+          <h2
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Getting started
+          </h2>
+          <span
+            class="font-mono text-[11px] tabular-nums text-muted-foreground/50"
+          >
+            01
+          </span>
+        </div>
+
+        <p class="max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+          {config.appName} is a privacy-first PDF toolkit. There is nothing to sign
+          up for and nothing to install for the web tools — open a tool, drop a
+          file, get a result.
         </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-          <div
-            class="bg-card border border-border p-4 rounded-xl shadow-sm flex items-start gap-3"
-          >
-            <Shield class="text-emerald-500 mt-0.5 shrink-0" size={20} />
-            <div>
-              <h4 class="font-semibold text-foreground">100% Private</h4>
-              <p class="text-sm text-muted-foreground mt-1">
-                All processing happens on your device. No data is sent to
-                servers.
-              </p>
-            </div>
-          </div>
-          <div
-            class="bg-card border border-border p-4 rounded-xl shadow-sm flex items-start gap-3"
-          >
-            <Zap class="text-amber-500 mt-0.5 shrink-0" size={20} />
-            <div>
-              <h4 class="font-semibold text-foreground">Lightning Fast</h4>
-              <p class="text-sm text-muted-foreground mt-1">
-                Powered by WebAssembly for native-speed desktop performance.
-              </p>
-            </div>
-          </div>
-          <div
-            class="bg-card border border-border p-4 rounded-xl shadow-sm flex items-start gap-3"
-          >
-            <WifiOff class="text-sky-500 mt-0.5 shrink-0" size={20} />
-            <div>
-              <h4 class="font-semibold text-foreground">Offline Ready</h4>
-              <p class="text-sm text-muted-foreground mt-1">
-                Works perfectly without an active internet connection.
-              </p>
-            </div>
-          </div>
-          <div
-            class="bg-card border border-border p-4 rounded-xl shadow-sm flex items-start gap-3"
-          >
-            <Infinity class="text-indigo-500 mt-0.5 shrink-0" size={20} />
-            <div>
-              <h4 class="font-semibold text-foreground">No Limits</h4>
-              <p class="text-sm text-muted-foreground mt-1">
-                Unlimited file sizes and completely free batch processing.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="installation" class="scroll-mt-32 space-y-6">
-        <h2
-          class="text-2xl font-bold text-foreground border-b border-border/50 pb-2"
-        >
-          Installation
-        </h2>
-
-        <div class="space-y-8">
-          <div>
-            <h3
-              class="text-lg font-semibold text-foreground flex items-center gap-2 mb-3"
+        <ul class="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60 sm:grid-cols-2">
+          {#each guarantees as g, i}
+            <li
+              class="flex flex-col gap-2 bg-card p-6"
+              in:fly={{
+                y: 12,
+                duration: 480,
+                delay: 100 + i * 60,
+                easing: cubicOut,
+              }}
             >
-              <MonitorSmartphone size={20} class="text-primary" /> Web App (No Installation)
-            </h3>
-            <p class="text-muted-foreground text-sm">
-              Simply navigate to the home page and start using the tools
-              immediately. Once the page loads, it acts as a Progressive Web App
-              (PWA) and can be used offline.
-            </p>
-          </div>
-
-          <div>
-            <h3
-              class="text-lg font-semibold text-foreground flex items-center gap-2 mb-3"
-            >
-              <Download size={20} class="text-primary" /> Desktop App (Windows, macOS,
-              Linux)
-            </h3>
-            <ol
-              class="list-decimal list-inside space-y-2 text-sm text-muted-foreground ml-1"
-            >
-              <li>
-                Go to our <a
-                  href={config.github + "/releases"}
-                  class="text-primary hover:underline font-medium"
-                  >GitHub Releases</a
-                > page.
-              </li>
-              <li>
-                Download the installer for your operating system:
-                <ul
-                  class="list-disc list-inside ml-6 mt-2 space-y-1 text-muted-foreground/80"
-                >
-                  <li>
-                    <strong>Windows:</strong> Download the
-                    <code
-                      class="bg-muted px-1.5 py-0.5 rounded text-xs text-foreground"
-                      >.msi</code
-                    >
-                    or
-                    <code
-                      class="bg-muted px-1.5 py-0.5 rounded text-xs text-foreground"
-                      >.exe</code
-                    > file
-                  </li>
-                  <li>
-                    <strong>macOS:</strong> Download the
-                    <code
-                      class="bg-muted px-1.5 py-0.5 rounded text-xs text-foreground"
-                      >.dmg</code
-                    > file
-                  </li>
-                  <li>
-                    <strong>Linux:</strong> Download the
-                    <code
-                      class="bg-muted px-1.5 py-0.5 rounded text-xs text-foreground"
-                      >.AppImage</code
-                    >
-                    or
-                    <code
-                      class="bg-muted px-1.5 py-0.5 rounded text-xs text-foreground"
-                      >.deb</code
-                    > file
-                  </li>
-                </ul>
-              </li>
-              <li class="pt-2">
-                Run the installer and follow the on-screen instructions.
-              </li>
-              <li>Launch the app from your applications menu.</li>
-            </ol>
-
-            <div
-              class="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4 text-sm text-amber-600 dark:text-amber-400"
-            >
-              <strong>Security Note:</strong> The desktop apps are currently signed
-              with self-signed certificates. You may see SmartScreen or Gatekeeper
-              warnings on first launch—this is normal for independent open-source
-              applications. The code is perfectly safe and can be fully audited on
-              our public GitHub repository.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="available-tools" class="scroll-mt-32 space-y-6">
-        <h2
-          class="text-2xl font-bold text-foreground border-b border-border/50 pb-2"
-        >
-          Available Tools
-        </h2>
-        <p class="text-muted-foreground">
-          A quick overview of the core utilities available in the toolkit.
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {#each toolList.slice(0, 6) as tool}
-            <a href={`/tools/${tool.slug}`}>
-              <div
-                class="p-4 border border-border rounded-xl bg-card hover:bg-muted/30 transition-colors"
-              >
-                <h4
-                  class="font-semibold text-foreground flex items-center gap-2 mb-1"
-                >
-                  <tool.icon size={16} class="text-primary" />
-                  {tool.title}
-                </h4>
-                <p class="text-xs text-muted-foreground">
-                  {tool.description.split(". ")[0]}
-                </p>
-              </div>
-            </a>
+              <span class="inline-flex size-7 items-center justify-center rounded-sm bg-primary/10 text-primary">
+                <g.icon class="size-3.5" />
+              </span>
+              <h3 class="text-base font-medium text-foreground">{g.title}</h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">
+                {g.body}
+              </p>
+            </li>
           {/each}
-        </div>
-      </section>
-
-      <section id="privacy-security" class="scroll-mt-32 space-y-6">
-        <h2
-          class="text-2xl font-bold text-foreground border-b border-border/50 pb-2"
-        >
-          Privacy & Security
-        </h2>
-        <p class="text-muted-foreground">
-          We operate with a strict privacy-first architecture that ensures your
-          documents remain completely in your control:
-        </p>
-
-        <ul class="space-y-4 mt-4">
-          <li class="flex items-start gap-3">
-            <ArrowRight size={18} class="text-primary mt-1 shrink-0" />
-            <div>
-              <strong class="text-foreground">Local Processing:</strong>
-              <span class="text-muted-foreground text-sm ml-1"
-                >All PDF operations happen directly inside your browser using
-                WebAssembly. Nothing is ever uploaded to a remote server.</span
-              >
-            </div>
-          </li>
-          <li class="flex items-start gap-3">
-            <ArrowRight size={18} class="text-primary mt-1 shrink-0" />
-            <div>
-              <strong class="text-foreground">No Data Collection:</strong>
-              <span class="text-muted-foreground text-sm ml-1"
-                >We do not track, store, log, or analyze the contents of your
-                documents in any way whatsoever.</span
-              >
-            </div>
-          </li>
-          <li class="flex items-start gap-3">
-            <ArrowRight size={18} class="text-primary mt-1 shrink-0" />
-            <div>
-              <strong class="text-foreground">Offline Mode:</strong>
-              <span class="text-muted-foreground text-sm ml-1"
-                >Use the tools in airplane mode. Once the website loads, your
-                data never leaves your physical device.</span
-              >
-            </div>
-          </li>
-          <li class="flex items-start gap-3">
-            <ArrowRight size={18} class="text-primary mt-1 shrink-0" />
-            <div>
-              <strong class="text-foreground">Open Source:</strong>
-              <span class="text-muted-foreground text-sm ml-1"
-                >Our entire codebase is publicly available. Security researchers
-                and developers can audit the source code to verify our privacy
-                claims.</span
-              >
-            </div>
-          </li>
         </ul>
       </section>
 
-      <section id="faq" class="scroll-mt-32 space-y-6 pb-12">
-        <h2
-          class="text-2xl font-bold text-foreground border-b border-border/50 pb-2"
+      <section id="installation" class="mt-24 scroll-mt-32">
+        <div
+          class="mb-8 flex items-baseline justify-between border-b border-border/60 pb-4"
         >
-          Frequently Asked Questions
-        </h2>
+          <h2
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Installation
+          </h2>
+          <span
+            class="font-mono text-[11px] tabular-nums text-muted-foreground/50"
+          >
+            02
+          </span>
+        </div>
 
-        <div class="space-y-6">
-          {#each faqs as faq, index}
-            {#if index < 4}
-              <div>
-                <h4 class="font-bold text-foreground text-lg mb-1">
-                  {faq.question}
-                </h4>
-                <p class="text-muted-foreground text-sm leading-relaxed">
-                  {faq.answer}
-                </p>
-              </div>
-            {:else}
-              <div class="bg-muted/40 border border-border p-5 rounded-xl">
-                <h4 class="font-bold text-foreground flex items-center gap-2 mb-2">
-                  {faq.question}
-                </h4>
-                <p class="text-muted-foreground text-sm mb-4">
-                  {faq.answer}
-                </p>
-                <Button
-                  href={config.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Github size={16} /> View GitHub Repository
-                </Button>
-              </div>
-            {/if}
+        <ol class="flex flex-col gap-8">
+          {#each installSteps as step, i (step.label)}
+            <li
+              class="flex flex-col gap-2 border-l border-border/60 pl-6"
+              in:fly={{
+                y: 12,
+                duration: 480,
+                delay: 80 + i * 70,
+                easing: cubicOut,
+              }}
+            >
+              <span
+                class="font-mono text-[11px] uppercase tracking-[0.18em] text-primary"
+              >
+                Step {step.label}
+              </span>
+              <h3 class="text-xl font-medium tracking-tight text-foreground">
+                {step.title}
+              </h3>
+              <p class="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {step.body}
+              </p>
+            </li>
           {/each}
+        </ol>
+
+        <div
+          class="mt-8 rounded-md border border-warning/30 bg-warning/5 p-5 text-sm leading-relaxed text-warning-foreground"
+          in:fly={{ y: 8, duration: 420, delay: 320, easing: cubicOut }}
+        >
+          <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-warning">
+            Note
+          </p>
+          <p class="mt-2 text-foreground/90">
+            Desktop installers are signed with self-issued certificates. SmartScreen
+            and Gatekeeper warnings on first launch are expected for independent
+            open-source projects — the source is fully auditable.
+          </p>
+        </div>
+      </section>
+
+      <section id="tools" class="mt-24 scroll-mt-32">
+        <div
+          class="mb-8 flex items-baseline justify-between border-b border-border/60 pb-4"
+        >
+          <h2
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Tools
+          </h2>
+          <span
+            class="font-mono text-[11px] tabular-nums text-muted-foreground/50"
+          >
+            03
+          </span>
+        </div>
+
+        <ul class="flex flex-col">
+          {#each toolList.slice(0, 8) as tool, i (tool.slug)}
+            <li
+              in:fly={{
+                y: 8,
+                duration: 380,
+                delay: 60 + i * 35,
+                easing: cubicOut,
+              }}
+            >
+              <a
+                href={`/tools/${tool.slug}`}
+                class="group flex items-start justify-between gap-6 border-b border-border/50 py-5 transition-colors duration-300 hover:bg-muted/30"
+              >
+                <div class="flex items-start gap-4">
+                  <tool.icon
+                    class="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+                  />
+                  <div class="flex flex-col gap-1">
+                    <span class="text-base font-medium text-foreground">
+                      {tool.title}
+                    </span>
+                    <span class="text-sm text-muted-foreground">
+                      {tool.description.split(". ")[0]}
+                    </span>
+                  </div>
+                </div>
+                <ArrowUpRight
+                  class="size-4 shrink-0 text-muted-foreground/50 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
+                />
+              </a>
+            </li>
+          {/each}
+        </ul>
+      </section>
+
+      <section id="privacy" class="mt-24 scroll-mt-32">
+        <div
+          class="mb-8 flex items-baseline justify-between border-b border-border/60 pb-4"
+        >
+          <h2
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            Privacy
+          </h2>
+          <span
+            class="font-mono text-[11px] tabular-nums text-muted-foreground/50"
+          >
+            04
+          </span>
+        </div>
+
+        <p class="max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
+          The privacy model is structural, not promised. The architecture
+          itself prevents the kinds of data flows that make uploads risky.
+        </p>
+
+        <ul class="mt-10 flex flex-col gap-6">
+          {#each privacyPoints as p, i}
+            <li
+              class="grid grid-cols-1 gap-2 border-b border-border/40 pb-6 sm:grid-cols-4"
+              in:fly={{
+                y: 10,
+                duration: 460,
+                delay: 80 + i * 60,
+                easing: cubicOut,
+              }}
+            >
+              <h3
+                class="col-span-1 text-base font-medium tracking-tight text-foreground"
+              >
+                {p.title}
+              </h3>
+              <p
+                class="col-span-1 max-w-xl text-sm leading-relaxed text-muted-foreground sm:col-span-3"
+              >
+                {p.body}
+              </p>
+            </li>
+          {/each}
+        </ul>
+      </section>
+
+      <section id="faq" class="mt-24 scroll-mt-32">
+        <div
+          class="mb-8 flex items-baseline justify-between border-b border-border/60 pb-4"
+        >
+          <h2
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+          >
+            FAQ
+          </h2>
+          <span
+            class="font-mono text-[11px] tabular-nums text-muted-foreground/50"
+          >
+            05
+          </span>
+        </div>
+
+        <ul class="flex flex-col">
+          {#each faqs as faq, i (faq.question)}
+            <li
+              class="flex flex-col gap-2 border-b border-border/50 py-6"
+              in:fly={{
+                y: 8,
+                duration: 420,
+                delay: 60 + i * 50,
+                easing: cubicOut,
+              }}
+            >
+              <h3 class="text-base font-medium text-foreground">
+                {faq.question}
+              </h3>
+              <p class="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {faq.answer}
+              </p>
+            </li>
+          {/each}
+        </ul>
+
+        <div
+          class="mt-12 flex flex-col gap-3 rounded-md border border-border/60 bg-muted/30 p-6 sm:flex-row sm:items-center sm:justify-between"
+          in:fly={{ y: 12, duration: 500, delay: 280, easing: cubicOut }}
+        >
+          <div>
+            <p
+              class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70"
+            >
+              Still stuck?
+            </p>
+            <p class="mt-1 text-sm text-foreground/90">
+              Open an issue or peek at how it's built.
+            </p>
+          </div>
+          <Button
+            href={config.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="outline"
+            class="rounded-sm"
+          >
+            <Github size={16} />
+            View on GitHub
+          </Button>
         </div>
       </section>
     </main>

@@ -2,199 +2,322 @@
   import { replaceState } from "$app/navigation";
   import { page } from "$app/state";
   import Seo from "$components/Seo.svelte";
-  import { Button } from "$components/ui/button";
   import Input from "$components/ui/input/input.svelte";
   import { config } from "$constants/app";
   import { toolsCategories } from "$constants/tools";
-  import { ArrowRight, ArrowUpRight, Search, Sparkles } from "@lucide/svelte";
+  import { cn } from "$lib/utils";
+  import { toolList } from "$tools/list";
+  import { ArrowUpRight, Search, X } from "@lucide/svelte";
+  import { cubicOut } from "svelte/easing";
+  import { fly } from "svelte/transition";
 
-  // Initialize both from the URL parameters
   let searchQuery = $state(page.url.searchParams.get("search") || "");
   let activeCategory = $state(page.url.searchParams.get("category") || "all");
+
+  let normalizedQuery = $derived(searchQuery.trim().toLowerCase());
 
   let filteredCategories = $derived(
     toolsCategories
       .map((cat) => {
         if (activeCategory !== "all" && cat.id !== activeCategory) return null;
-
         const matchingTools = cat.tools?.filter(
           (tool) =>
-            tool.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            tool.description.toLowerCase().includes(searchQuery.toLowerCase()),
+            !normalizedQuery ||
+            tool.title.toLowerCase().includes(normalizedQuery) ||
+            tool.description.toLowerCase().includes(normalizedQuery)
         );
-
-        return matchingTools?.length! > 0
+        return matchingTools && matchingTools.length > 0
           ? { ...cat, tools: matchingTools }
           : null;
       })
-      .filter(Boolean),
+      .filter(Boolean)
   );
 
-  const exploreKeywords = [...config.appKeywords, 'pdf tools', 'pdf converter', 'pdf editor online free'];
-  function updateCategory(category: string) {
+  let totalMatches = $derived(
+    filteredCategories.reduce((acc, c) => acc + (c?.tools?.length ?? 0), 0)
+  );
+
+  const exploreKeywords = [
+    ...config.appKeywords,
+    "pdf tools",
+    "pdf converter",
+    "pdf editor online free",
+  ];
+
+  function updateCategory(id: string) {
     const url = new URL(page.url);
-    if (category === "all") {
-      url.searchParams.delete("category");
-    } else {
-      url.searchParams.set("category", category);
-    }
-    activeCategory = category;
+    if (id === "all") url.searchParams.delete("category");
+    else url.searchParams.set("category", id);
+    activeCategory = id;
     replaceState(url.href, { scroll: false });
   }
 
-  function handleSearchInput(query: string) {
+  function handleSearch(value: string) {
     const url = new URL(page.url);
-    if (query) {
-      url.searchParams.set("search", query);
-    } else {
-      url.searchParams.delete("search");
-    }
-    searchQuery = query; // Ensure Svelte state stays in sync
+    if (value) url.searchParams.set("search", value);
+    else url.searchParams.delete("search");
+    searchQuery = value;
     replaceState(url.href, { scroll: false });
   }
+
+  function reset() {
+    handleSearch("");
+    updateCategory("all");
+  }
+
+  let categoryTabs = $derived([
+    { id: "all", name: "All", count: toolList.length },
+    ...toolsCategories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      count: c.tools?.length ?? 0,
+    })),
+  ]);
 </script>
 
-<Seo 
+<Seo
   title="Explore Free PDF Tools | Orbit - No Upload, 100% Offline"
   description="Explore a complete library of free, fast PDF tools. Edit, convert, merge, and process PDFs entirely in your browser with zero data uploads."
   keywords={exploreKeywords}
 />
 
 <main
-  class="relative z-10 container mx-auto px-4 py-24 md:py-32 pt-10! max-w-app @container"
+  class="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 px-1 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-2 sm:px-2 sm:pt-4"
 >
-  <div
-    class="flex flex-col @4xl:flex-row items-start @4xl:items-end justify-between gap-6 mb-16"
+  <header
+    class="flex flex-col gap-5 border-b border-border/60 pb-8"
+    in:fly={{ y: 10, duration: 480, easing: cubicOut }}
   >
-    <div class="max-w-2xl">
-      <div
-        class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary backdrop-blur-sm mb-4"
+    <div class="flex flex-wrap items-center gap-3">
+      <span
+        class="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-primary"
       >
-        <Sparkles size={12} />
-        <span>Explore Library</span>
-      </div>
-      <h1
-        class="text-4xl @4xl:text-5xl font-extrabold tracking-tight text-foreground mb-4"
+        Library
+      </span>
+      <span class="text-muted-foreground/40">·</span>
+      <span
+        class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
       >
-        Everything you need <br />
-        <span
-          class="text-transparent bg-clip-text bg-linear-to-r from-primary to-sky-600"
-          >to master PDFs.</span
-        >
-      </h1>
-      <p class="text-lg text-muted-foreground">
-        Browser-based tools for every workflow. Secure, fast, and free.
-      </p>
+        {String(toolList.length).padStart(2, "0")} tools · all offline
+      </span>
     </div>
 
-    <div class="w-full @4xl:w-auto relative group flex items-center mt-auto">
-      <Search
-        size={18}
-        class="size-7 my-auto text-primary absolute z-5 inset-y-0 left-0 pl-3 pointer-events-none group-focus-within:text-primary transition-colors"
-      />
-      <Input
-        type="search"
-        name="explore-search"
-        value={searchQuery}
-        oninput={(e) => handleSearchInput(e.currentTarget.value)}
-        placeholder="Search tools (e.g. 'Merge')..."
-        class="w-full md:w-80 rounded-xl pl-10 pr-4 py-3 text-sm font-medium shadow-sm backdrop-blur-md outline-none bg-card"
-      />
-    </div>
-  </div>
-
-  <div
-    class="flex flex-wrap items-center gap-2 mb-12 border-b border-border/60 pb-6"
-  >
-    <Button
-      variant={activeCategory === "all" ? "dark" : "secondary"}
-      class="rounded-full"
-      onclick={() => updateCategory("all")}
-    >
-      All Tools
-    </Button>
-    {#each toolsCategories as cat}
-      <Button
-        variant={activeCategory === cat.id ? "dark" : "ghost"}
-        class="rounded-full"
-        onclick={() => updateCategory(cat.id)}
-      >
-        {cat.name}
-      </Button>
-    {/each}
-  </div>
-
-  <div class="space-y-16">
-    {#if filteredCategories.length === 0}
-      <div class="flex flex-col items-center justify-center py-20 text-center">
-        <div
-          class="h-16 w-16 bg-muted/30 rounded-full flex items-center justify-center text-muted-foreground mb-4"
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div class="flex flex-col gap-3">
+        <h1
+          class="text-3xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl"
         >
-          <Search size={24} />
-        </div>
-        <h3 class="text-lg font-semibold text-foreground">No tools found</h3>
-        <p class="text-muted-foreground">
-          Try searching for something else like "Split" or "Protect".
+          Everything you need
+          <span class="text-primary">to master PDFs.</span>
+        </h1>
+        <p class="max-w-xl text-sm leading-relaxed text-muted-foreground">
+          Browser-based, signed, and shippable. Pick a tool — your files never
+          leave the device.
         </p>
       </div>
-    {/if}
 
-    {#each filteredCategories as category}
-      <section class="animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h2 class="text-2xl font-bold text-foreground tracking-tight">
-              {category?.name}
-            </h2>
-            <p class="text-muted-foreground text-sm">
-              {category?.description}
-            </p>
-          </div>
-          {#if activeCategory === "all"}
-            <button
-              onclick={() => updateCategory(category?.id || "all")}
-              class="hidden sm:flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              View all <ArrowRight size={14} />
-            </button>
-          {/if}
-        </div>
+      <div class="relative w-full lg:w-80">
+        <Search
+          class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          type="search"
+          name="explore-search"
+          value={searchQuery}
+          oninput={(e) => handleSearch(e.currentTarget.value)}
+          placeholder="Search tools…"
+          class="h-11 rounded-sm pl-9 pr-12 font-mono text-sm placeholder:font-mono placeholder:text-muted-foreground/60"
+        />
+        {#if searchQuery}
+          <button
+            type="button"
+            onclick={() => handleSearch("")}
+            class="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+            aria-label="Clear search"
+          >
+            <X class="size-3.5" />
+          </button>
+        {:else}
+          <kbd
+            class="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-xs border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70 lg:inline-block"
+          >
+            /
+          </kbd>
+        {/if}
+      </div>
+    </div>
+  </header>
 
-        <div
-          class="grid grid-cols-1 @md:grid-cols-2 @4xl:grid-cols-3 @6xl:grid-cols-4 gap-5"
+  <nav
+    aria-label="Categories"
+    class="-mx-1 flex flex-wrap items-center gap-1 overflow-x-auto px-1 pb-1 sm:overflow-visible"
+    in:fly={{ y: 8, duration: 480, delay: 80, easing: cubicOut }}
+  >
+    {#each categoryTabs as tab (tab.id)}
+      <button
+        type="button"
+        onclick={() => updateCategory(tab.id)}
+        aria-pressed={activeCategory === tab.id}
+        class={cn(
+          "inline-flex shrink-0 items-center gap-2 rounded-sm px-3 py-2 font-mono text-[11px] uppercase tracking-[0.16em] transition-colors duration-200 active:scale-[0.97]",
+          activeCategory === tab.id
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+        )}
+      >
+        <span>{tab.name}</span>
+        <span
+          class={cn(
+            "tabular-nums text-[10px]",
+            activeCategory === tab.id
+              ? "text-primary/70"
+              : "text-muted-foreground/50"
+          )}
         >
-          {#each category?.tools as tool}
-            <a
-              href={`/tools/${tool.slug}`}
-              class="group flex flex-col justify-between p-5 rounded-xl border border-border bg-card/80 hover:bg-secondary/80 transition-colors relative overflow-hidden"
-            >
-              <div class="flex items-start justify-between mb-4">
-                <div
-                  class={`p-2.5 rounded-lg ${tool.color} bg-opacity-10 text-current`}
-                >
-                  {#if tool.icon}
-                    {@const Icon = tool.icon}
-                    <Icon size={20} />
-                  {/if}
-                </div>
-                <ArrowUpRight
-                  size={18}
-                  class="text-muted-foreground opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                />
-              </div>
-
-              <div>
-                <h3 class="font-bold text-foreground mb-1">{tool.title}</h3>
-                <p
-                  class="text-xs text-muted-foreground line-clamp-2 leading-relaxed"
-                >
-                  {tool.description}
-                </p>
-              </div>
-            </a>
-          {/each}
-        </div>
-      </section>
+          {String(tab.count).padStart(2, "0")}
+        </span>
+      </button>
     {/each}
-  </div>
+  </nav>
+
+  {#if filteredCategories.length === 0}
+    <div
+      class="flex flex-col items-center gap-3 rounded-md border border-border/60 bg-muted/20 px-6 py-16 text-center"
+      in:fly={{ y: 8, duration: 360, easing: cubicOut }}
+    >
+      <Search class="size-5 text-muted-foreground/50" />
+      <p
+        class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70"
+      >
+        No matches
+      </p>
+      <p class="max-w-xs text-sm text-muted-foreground">
+        Nothing found for
+        <span class="font-mono text-foreground">"{searchQuery}"</span>. Try a
+        different keyword.
+      </p>
+      <button
+        type="button"
+        onclick={reset}
+        class="mt-2 inline-flex items-center gap-1 font-mono text-[11px] uppercase tracking-[0.16em] text-primary transition-colors hover:text-primary/80"
+      >
+        Reset filters
+        <ArrowUpRight class="size-3" />
+      </button>
+    </div>
+  {:else}
+    <div class="flex flex-col gap-12">
+      {#if normalizedQuery}
+        <div
+          class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+        >
+          {String(totalMatches).padStart(2, "0")} {totalMatches === 1
+            ? "result"
+            : "results"} for
+          <span class="text-foreground">"{searchQuery}"</span>
+        </div>
+      {/if}
+
+      {#each filteredCategories as category, ci (category?.id)}
+        <section
+          in:fly={{
+            y: 10,
+            duration: 480,
+            delay: 60 + ci * 60,
+            easing: cubicOut,
+          }}
+        >
+          <div
+            class="mb-6 flex items-baseline justify-between gap-3 border-b border-border/60 pb-3"
+          >
+            <div class="flex flex-col gap-1">
+              <span
+                class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                {category?.name}
+              </span>
+              <p class="text-xs text-muted-foreground/80">
+                {category?.description}
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span
+                class="font-mono text-[11px] tabular-nums text-muted-foreground/50"
+              >
+                {String(category?.tools?.length ?? 0).padStart(2, "0")}
+              </span>
+              {#if activeCategory === "all" && !normalizedQuery}
+                <button
+                  type="button"
+                  onclick={() => updateCategory(category?.id || "all")}
+                  class="hidden font-mono text-[10px] uppercase tracking-[0.16em] text-primary transition-colors hover:text-primary/80 sm:inline-flex"
+                >
+                  View all
+                </button>
+              {/if}
+            </div>
+          </div>
+
+          <ul
+            class="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          >
+            {#each category?.tools ?? [] as tool, ti (tool.slug)}
+              {@const Icon = tool.icon}
+              <li>
+                <a
+                  href={`/tools/${tool.slug}`}
+                  class="group flex h-full flex-col gap-4 bg-card p-5 transition-colors duration-300 hover:bg-muted/40 active:scale-[0.99]"
+                  in:fly={{
+                    y: 8,
+                    duration: 320,
+                    delay: 40 + (ti % 8) * 25,
+                    easing: cubicOut,
+                  }}
+                >
+                  <div class="flex items-start justify-between gap-3">
+                    <span
+                      class="inline-flex size-8 items-center justify-center rounded-sm bg-primary/10 text-primary transition-colors group-hover:bg-primary/15"
+                    >
+                      {#if Icon}<Icon size={16} />{/if}
+                    </span>
+                    <span
+                      class="font-mono text-[10px] tabular-nums text-muted-foreground/50"
+                    >
+                      {String(ti + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+
+                  <div class="flex flex-1 flex-col gap-1.5">
+                    <h3
+                      class="text-base font-medium tracking-tight text-foreground"
+                    >
+                      {tool.title}
+                    </h3>
+                    <p
+                      class="line-clamp-2 text-xs leading-relaxed text-muted-foreground"
+                    >
+                      {tool.description}
+                    </p>
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between border-t border-border/40 pt-3"
+                  >
+                    <span
+                      class="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60 transition-colors group-hover:text-primary"
+                    >
+                      Open
+                    </span>
+                    <ArrowUpRight
+                      class="size-3.5 text-muted-foreground/50 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
+                    />
+                  </div>
+                </a>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/each}
+    </div>
+  {/if}
 </main>

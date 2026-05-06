@@ -2,96 +2,120 @@
   import Logo from "$components/Logo.svelte";
   import { config } from "$constants/app";
   import { toolsCategories } from "$constants/tools";
-  import { ArrowUpRight, Github, Twitter } from "@lucide/svelte";
+  import { Github } from "@lucide/svelte";
 
   const currentYear = new Date().getFullYear();
 
-  const footerSections = [
+  const columns = [
     {
-      title: "Popular Tools",
+      title: "Product",
       links: [
-        { label: "Merge PDF", href: "/tools/merge-pdf" },
-        { label: "Split PDF", href: "/tools/split-pdf" },
-        { label: "Compress PDF", href: "/tools/compress-pdf" },
-        { label: "Convert PDF", href: "/tools/pdf-to-img" },
+        { label: "All tools", href: "/#tools" },
+        { label: "Explore", href: "/explore" },
+        { label: "Download", href: "/download" },
+        { label: "Changelog", href: "/changelog" },
       ],
     },
     {
       title: "Categories",
-      links: toolsCategories.map((category) => ({
-        label: category.name,
-        href: `/explore?category=${category.id}`,
+      links: toolsCategories.slice(0, 5).map((c) => ({
+        label: c.name,
+        href: `/explore?category=${c.id}`,
       })),
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "About", href: "/about" },
+        { label: "Documentation", href: "/docs" },
+        { label: "GitHub", href: config.github, external: true },
+        { label: "Support", href: `mailto:${config.supportEmail}`, external: true },
+      ],
     },
   ];
 </script>
 
-<footer class="w-full border-t border-border/40 text-sm">
-  <div class="container mx-auto max-w-app px-6 py-12 md:py-20 lg:px-8">
-    <div class="xl:grid xl:grid-cols-5 xl:gap-8">
-      <div class="space-y-8 xl:col-span-2">
-        <a href="/" class="flex items-center gap-2 group w-fit">
+<footer class="w-full border-t border-border/60">
+  <div class="mx-auto w-full max-w-6xl px-5 py-16 md:px-8 md:py-20">
+    <div class="grid gap-12 md:grid-cols-[1.4fr_2fr]">
+      <div class="flex flex-col gap-6">
+        <a
+          href="/"
+          class="flex w-fit items-center transition-opacity hover:opacity-90"
+          aria-label={`${config.appName} home`}
+        >
           <Logo />
         </a>
-
-        <p class="max-w-xs text-sm leading-6 text-muted-foreground">
+        <p class="max-w-sm text-sm leading-relaxed text-muted-foreground">
           {config.appDescription}
         </p>
+        <div class="mt-2 flex items-center gap-3">
+          <a
+            href={config.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex size-9 items-center justify-center rounded-sm border border-border/60 text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground"
+            aria-label="GitHub"
+          >
+            <Github size={16} />
+          </a>
+        </div>
       </div>
 
-      <div class="mt-16 grid grid-cols-2 gap-8 xl:col-span-3 xl:mt-0 ml-auto">
-        <div class="md:grid md:grid-cols-2 md:gap-8 space-y-10">
-          {#each footerSections as footerSection}
-            <div>
-              <h3
-                class="text-sm font-semibold leading-6 text-foreground tracking-tight"
+      <div class="grid grid-cols-2 gap-8 sm:grid-cols-3">
+        {#each columns as col, i (col.title)}
+          <div class="flex flex-col gap-5">
+            <div
+              class="flex items-baseline justify-between border-b border-border/60 pb-3"
+            >
+              <span
+                class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70"
               >
-                {footerSection.title}
-              </h3>
-              <ul role="list" class="mt-6 space-y-4">
-                {#each footerSection.links as link}
-                  <li>
-                    <a
-                      href={link.href}
-                      class="group flex w-fit items-center gap-1 text-sm leading-6 text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {link.label}
-                      <ArrowUpRight
-                        size={12}
-                        class="opacity-0 -translate-y-0.5 translate-x-0.5 transition-all group-hover:opacity-100"
-                      />
-                    </a>
-                  </li>
-                {/each}
-              </ul>
+                {col.title}
+              </span>
+              <span
+                class="font-mono text-[10px] tabular-nums text-muted-foreground/40"
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
             </div>
-          {/each}
-        </div>
+
+            <ul class="flex flex-col gap-3">
+              {#each col.links as link (link.href + link.label)}
+                <li>
+                  <a
+                    href={link.href}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noopener noreferrer" : undefined}
+                    class="group inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <span class="relative">
+                      {link.label}
+                      <span
+                        aria-hidden="true"
+                        class="absolute -bottom-0.5 left-0 h-px w-0 bg-foreground transition-[width] duration-300 ease-out group-hover:w-full"
+                      ></span>
+                    </span>
+                  </a>
+                </li>
+              {/each}
+            </ul>
+          </div>
+        {/each}
       </div>
     </div>
 
-    <div class="mt-16 border-t border-border/40 pt-8 sm:mt-20 lg:mt-24">
-      <div class="flex flex-col items-center justify-between gap-6 md:flex-row">
-        <p
-          class="text-xs leading-5 text-muted-foreground text-center md:text-left"
-        >
-          &copy; {currentYear}
-          {config.appName}. Open Source under MIT License.
-        </p>
-
-        <div class="flex items-center gap-6">
-          <div class="flex gap-4">
-            <a
-              href={config.github}
-              class="text-muted-foreground transition-colors hover:text-foreground"
-              target="_blank" rel="noopener noreferrer"
-            >
-              <span class="sr-only">GitHub</span>
-              <Github size={18} />
-            </a>
-          </div>
-        </div>
-      </div>
+    <div
+      class="mt-16 flex flex-col items-start justify-between gap-4 border-t border-border/60 pt-6 sm:flex-row sm:items-center"
+    >
+      <p
+        class="font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground/70"
+      >
+        © {currentYear} · {config.appName} · v{config.appVersion}
+      </p>
+      <p class="font-mono text-[11px] text-muted-foreground/70">
+        GPL-3.0 · Built locally, runs locally.
+      </p>
     </div>
   </div>
 </footer>

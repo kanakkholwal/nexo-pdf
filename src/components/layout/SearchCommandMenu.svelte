@@ -1,292 +1,427 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { Button } from "$components/ui/button";
-  import * as Command from "$components/ui/command";
-  import * as Dialog from "$components/ui/dialog";
+  import { goto, onNavigate } from "$app/navigation";
   import { config } from "$constants/app";
+  import { toolsCategories } from "$constants/tools";
   import { cn } from "$lib/utils";
   import { appState } from "$stores/app-state.svelte";
   import { toolList } from "$tools/list";
-  import { ChevronRight, FileText, Github, Search } from "@lucide/svelte";
-  import { openUrl } from "@tauri-apps/plugin-opener";
+  import {
+    BugIcon,
+    ChevronRight,
+    CornerDownLeft,
+    FileText,
+    Github,
+    HomeIcon,
+    Search,
+  } from "@lucide/svelte";
   import { onMount } from "svelte";
+  import { cubicOut } from "svelte/easing";
+  import { fade, scale } from "svelte/transition";
 
-  interface CommandItem {
+  type Command = {
     id: string;
     title: string;
     description?: string;
     category: string;
-    action: () => void;
-    icon?: any;
+    icon: typeof FileText;
     keywords?: string[];
-    color?: string;
-  }
+    action: () => void;
+  };
 
-  interface GroupedCommand {
-    command: CommandItem;
-    index: number;
-  }
-
-  let open = $state(false);
-  let searchValue = $state("");
-  let selectedIndex = $state(0);
-  let filteredCommands = $state<CommandItem[]>([]);
-  let { iconOnly } = $props<{ iconOnly?: boolean }>();
+  let { iconOnly = false } = $props<{ iconOnly?: boolean }>();
   let isTauri = $derived(appState.isTauri);
 
-  // PDF Tool commands - customize these based on your actual tools
-  const commands: CommandItem[] = [
+  let isOpen = $state(false);
+  let query = $state("");
+  let selectedIndex = $state(0);
+  let inputRef = $state<HTMLInputElement>();
+  let contentHeight = $state(0);
+
+  function open() {
+    isOpen = true;
+  }
+  function close() {
+    isOpen = false;
+  }
+
+  async function openExternal(url: string) {
+    if (isTauri) {
+      const { openUrl } = await import("@tauri-apps/plugin-opener");
+      openUrl(url);
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  function categoryName(id: string) {
+    return toolsCategories.find((c) => c.id === id)?.name ?? id;
+  }
+
+  const commands: Command[] = [
     ...toolList.map((tool) => ({
-      id: tool.slug,
+      id: `tool:${tool.slug}`,
       title: tool.title,
       description: tool.description.split(". ")[0] + ".",
-      category: tool.category,
-      action: () => {
-        goto(`/tools/${tool.slug}`);
-      },
+      category: categoryName(tool.category),
       icon: tool.icon || FileText,
-      color: tool.color,
       keywords: [tool.title, ...(tool.keywords || [])],
+      action: () => goto(`/tools/${tool.slug}`),
     })),
     {
-      id: "home",
-      title: "Go to Home",
-      description: "Navigate back to the homepage.",
+      id: "nav:home",
+      title: "Home",
+      description: "Back to the start.",
       category: "Navigation",
-      action: () => {
-        goto("/");
-      },
-      icon: ChevronRight,
-      keywords: ["home", "main page", "dashboard"],
+      icon: HomeIcon,
+      keywords: ["home", "main", "start"],
+      action: () => goto("/"),
     },
     {
-      id: "report:bug",
-      title: "Report a Bug",
-      description: "Found an issue? Let us know by reporting a bug.",
-      category: "Support",
-      action: () => {
-        if(isTauri){
-          openUrl(config.github + "/issues/new");
-        } else {
-          goto(config.github + "/issues/new");
-        }
-      },
+      id: "nav:explore",
+      title: "Explore tools",
+      description: "Browse the full tool library.",
+      category: "Navigation",
+      icon: Search,
+      keywords: ["explore", "browse", "library"],
+      action: () => goto("/explore"),
+    },
+    {
+      id: "nav:docs",
+      title: "Documentation",
+      description: "Setup, tools, and FAQ.",
+      category: "Navigation",
       icon: FileText,
-      keywords: ["report bug", "feedback", "issue","support","bug"],
-
+      keywords: ["docs", "help", "guide"],
+      action: () => goto("/docs"),
     },
     {
-      id: "github",
-      title: "View on GitHub",
-      description: "Check out the source code on GitHub.",
-      category: "External",
-      action: () => {
-        if(isTauri){
-          openUrl(config.github);
-        } else {
-          goto(config.github);
-        }
-      },
-      icon: Github,
-      keywords: ["github", "source code", "repository"],
+      id: "nav:changelog",
+      title: "Changelog",
+      description: "Recent releases.",
+      category: "Navigation",
+      icon: FileText,
+      keywords: ["changelog", "release", "what's new"],
+      action: () => goto("/changelog"),
     },
-    // ...( )Add more commands as needed
+    {
+      id: "ext:github",
+      title: "View on GitHub",
+      description: "Open the source repository.",
+      category: "External",
+      icon: Github,
+      keywords: ["github", "source", "repository"],
+      action: () => openExternal(config.github),
+    },
+    {
+      id: "ext:bug",
+      title: "Report a bug",
+      description: "Open an issue on GitHub.",
+      category: "External",
+      icon: BugIcon,
+      keywords: ["bug", "issue", "report", "feedback"],
+      action: () => openExternal(`${config.github}/issues/new`),
+    },
   ];
 
-  function filterCommands(query: string) {
-    if (!query.trim()) {
-      filteredCommands = commands;
-      return;
-    }
+  let normalizedQuery = $derived(query.trim().toLowerCase());
 
-    const lowerQuery = query.toLowerCase();
-    filteredCommands = commands.filter((cmd) => {
-      const titleMatch = cmd.title.toLowerCase().includes(lowerQuery);
-      const descMatch = cmd.description?.toLowerCase().includes(lowerQuery);
-      const slugMatch = cmd.id.toLowerCase().includes(lowerQuery);
-      const keywordsMatch = cmd.keywords?.some((kw) =>
-        kw.toLowerCase().includes(lowerQuery),
-      );
-      return titleMatch || descMatch || slugMatch || keywordsMatch;
+  let results = $derived(
+    !normalizedQuery
+      ? commands
+      : commands.filter((cmd) => {
+          const haystack = [
+            cmd.title,
+            cmd.description ?? "",
+            cmd.id,
+            ...(cmd.keywords ?? []),
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(normalizedQuery);
+        })
+  );
+
+  $effect(() => {
+    void results;
+    selectedIndex = 0;
+  });
+
+  let groupedResults = $derived.by(() => {
+    const groups: { name: string; items: { cmd: Command; index: number }[] }[] = [];
+    const map = new Map<string, { cmd: Command; index: number }[]>();
+    results.forEach((cmd, index) => {
+      const list = map.get(cmd.category) ?? [];
+      list.push({ cmd, index });
+      map.set(cmd.category, list);
     });
+    map.forEach((items, name) => groups.push({ name, items }));
+    return groups;
+  });
 
-    selectedIndex = 0;
+  function selectResult(cmd: Command) {
+    cmd.action();
+    close();
   }
 
-  function handleClose() {
-    open = false;
-    searchValue = "";
-    selectedIndex = 0;
-  }
-
-
-  
-	function runCommand(command: () => unknown) {
-		open = false;
-		command();
-	}
-
-  function handleKeyDown(e: KeyboardEvent) {
-    if (!open) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        open = true;
-      }
+  function handleGlobalKeydown(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      isOpen ? close() : open();
       return;
     }
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        selectedIndex = Math.min(
-          selectedIndex + 1,
-          filteredCommands.length - 1,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        selectedIndex = Math.max(selectedIndex - 1, 0);
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (filteredCommands[selectedIndex]) {
-          runCommand(filteredCommands[selectedIndex].action);
-          handleClose();
-        }
-        break;
-      case "Escape":
-        e.preventDefault();
-        handleClose();
-        break;
+    if (!isOpen) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+      return;
+    }
+    if (results.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % results.length;
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      selectedIndex = (selectedIndex - 1 + results.length) % results.length;
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const target = results[selectedIndex];
+      if (target) selectResult(target);
     }
   }
 
-  onMount(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    filterCommands("");
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+  $effect(() => {
+    if (isOpen && inputRef) {
+      const id = requestAnimationFrame(() => inputRef?.focus());
+      return () => cancelAnimationFrame(id);
+    }
   });
 
   $effect(() => {
-    filterCommands(searchValue);
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = isOpen ? "hidden" : "";
   });
 
-  // Group commands by category
-  function groupedCommands() {
-    const groups: { [key: string]: GroupedCommand[] } = {};
-    filteredCommands.forEach((cmd, index) => {
-      if (!groups[cmd.category]) {
-        groups[cmd.category] = [];
-      }
-      groups[cmd.category].push({ command: cmd, index });
-    });
-    return groups;
+  onMount(() => {
+    window.addEventListener("keydown", handleGlobalKeydown);
+    return () => window.removeEventListener("keydown", handleGlobalKeydown);
+  });
+
+  onNavigate(() => close());
+
+  function highlight(text: string, search: string) {
+    if (!search.trim()) return [{ text, hit: false }];
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "gi");
+    return text
+      .split(regex)
+      .filter(Boolean)
+      .map((part) => ({
+        text: part,
+        hit: part.toLowerCase() === search.toLowerCase(),
+      }));
   }
 </script>
 
-<svelte:window on:keydown={handleKeyDown} />
-
-<Dialog.Root bind:open>
-  <Dialog.Trigger>
-    {#snippet child({ props })}
-      <Button
-        {...props}
-        aria-label="Open Command Menu"
-        title="Open Command Menu (⌘K)"
-        variant="outline"
-        size={iconOnly ? "icon" : "default"}
-        class={cn(
-          "group relative group-data-[state=collapsed]:size-8",
-          !iconOnly && "w-full max-w-xs",
-        )}
-      >
-        <Search
-          class="size-4 shrink-0 opacity-50 transition-opacity group-hover:opacity-70"
-        />
-        {#if !iconOnly}
-          <span
-            class="flex-1 text-left text-xs font-medium group-data-[state=collapsed]:hidden!"
-            >Search tools...</span
-          >
-          <kbd
-            class="group-data-[state=collapsed]:hidden! hidden items-center gap-1 rounded-md border border-border/40 bg-background/50 px-2 py-1 font-mono text-[11px] font-medium text-muted-foreground/70 backdrop-blur-sm sm:inline-flex"
-          >
-            <span
-              class="text-xs font-semibold group-data-[state=collapsed]:hidden"
-              >⌘</span
-            >K
-          </kbd>
-        {/if}
-      </Button>
-    {/snippet}
-  </Dialog.Trigger>
-  <Dialog.Content showCloseButton={false} class="rounded-xl border-none bg-clip-padding p-2 pb-11 shadow-2xl ring-4 ring-neutral-200/80 dark:bg-neutral-900 dark:ring-neutral-800">
-    <Command.Root
-      class="**:data-[slot=command-input-wrapper]:bg-input/50 **:data-[slot=command-input-wrapper]:border-input rounded-none bg-transparent **:data-[slot=command-input]:h-9! **:data-[slot=command-input]:py-0 **:data-[slot=command-input-wrapper]:mb-0 **:data-[slot=command-input-wrapper]:h-9! **:data-[slot=command-input-wrapper]:rounded-md **:data-[slot=command-input-wrapper]:border"
+{#if iconOnly}
+  <button
+    type="button"
+    onclick={open}
+    aria-label="Open command menu"
+    title="Open command menu (⌘K)"
+    class="inline-flex size-9 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground active:scale-[0.97]"
+  >
+    <Search class="size-4" />
+  </button>
+{:else}
+  <button
+    type="button"
+    onclick={open}
+    aria-label="Open command menu"
+    title="Open command menu (⌘K)"
+    class="group flex h-9 w-full items-center gap-2 rounded-sm border border-border/60 bg-background/40 px-3 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+  >
+    <Search class="size-3.5 shrink-0 opacity-70 transition-opacity group-hover:opacity-100" />
+    <span class="flex-1 truncate font-mono text-[11px] uppercase tracking-[0.14em]">
+      Search…
+    </span>
+    <kbd
+      class="hidden items-center gap-0.5 rounded-xs border border-border/60 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 sm:inline-flex"
     >
-      <Command.Input
-        placeholder={`Search tools by name or function in ${toolList.length} tools...`}
-      />
-      <Command.List class="scrollbar-hide">
-        {#if filteredCommands.length === 0}
-          <Command.Empty>
-            <div class="text-sm text-muted-foreground">
-              No results found. Try a different search.
-            </div>
-          </Command.Empty>
-        {:else}
-          {#each Object.entries(groupedCommands()) as [category, categoryCommands]}
-            <Command.Group heading={category}>
-              {#each categoryCommands as { command, index }}
-                {@const isSelected = selectedIndex === index}
-                <Command.Item
-                  value={command.id}
-                  onmouseenter={() => (selectedIndex = index)}
-                  onSelect={() => runCommand(command.action)}
-                  class={cn(
-                    "cursor-pointer rounded-md border border-transparent transition-colors hover:bg-accent hover:text-accent-foreground hover:border-border",
-                    isSelected && "aria-selected:bg-primary/5 aria-selected:text-foreground aria-selected:border-primary",
-                  )}
-                >
-                  {#if command.icon}
-                    {@const IconComponent = command.icon}
-                    <IconComponent
-                      class={cn("size-5 shrink-0", command.color)}
-                    />
-                  {/if}
-                  <div class="flex flex-col flex-1 min-w-0 gap-0.5">
-                    <span class="font-medium truncate text-foreground">{command.title}</span>
-                    {#if command.description}
-                      <span class="text-xs text-muted-foreground truncate">
-                        {command.description}
-                      </span>
-                    {/if}
-                  </div>
-                  {#if isSelected}
-                    <ChevronRight class="size-4 shrink-0 opacity-60 ml-auto" />
-                  {/if}
-                </Command.Item>
-              {/each}
-            </Command.Group>
-          {/each}
-        {/if}
-      </Command.List>
-    </Command.Root>
-    <div	class="text-muted-foreground absolute inset-x-0 bottom-0 z-20 flex h-10 items-center gap-2 rounded-b-xl border-t border-t-neutral-100 bg-neutral-50 px-4 text-xs font-medium dark:border-t-neutral-700 dark:bg-neutral-800">
-      <div class="flex items-center justify-between">
-        <span
-          >Press <kbd class="rounded bg-background px-1.5 py-0.5">Esc</kbd> to
-          close</span
+      ⌘K
+    </kbd>
+  </button>
+{/if}
+
+{#if isOpen}
+  <div
+    class="fixed inset-0 z-60 bg-background/70 backdrop-blur-md"
+    transition:fade={{ duration: 160 }}
+    onclick={close}
+    onkeydown={(e) => e.key === "Escape" && close()}
+    role="presentation"
+  ></div>
+
+  <div
+    class="fixed inset-0 z-60 flex items-start justify-center px-4 pt-[12vh]"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Command menu"
+    tabindex="-1"
+    onclick={(e) => e.target === e.currentTarget && close()}
+    onkeydown={(e) => e.key === "Escape" && close()}
+  >
+    <div
+      class="relative w-full max-w-xl transform-gpu overflow-hidden rounded-md border border-border/60 bg-card shadow-2xl"
+      transition:scale={{ duration: 220, start: 0.96, easing: cubicOut }}
+      onoutroend={() => {
+        query = "";
+        contentHeight = 0;
+        selectedIndex = 0;
+      }}
+    >
+      <div class="flex items-center gap-2 border-b border-border/60 px-3">
+        <Search class="size-4 shrink-0 text-muted-foreground/70" />
+        <input
+          bind:this={inputRef}
+          bind:value={query}
+          type="search"
+          placeholder={`Search ${toolList.length} tools, pages, and actions…`}
+          aria-label="Search"
+          class="h-12 w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+        />
+        <kbd
+          class="pointer-events-none hidden h-5 select-none items-center rounded-xs border border-border/60 bg-muted/60 px-1.5 font-mono text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 sm:inline-flex"
         >
-        <span>
-          <kbd class="rounded bg-background px-1 py-0.5">↑</kbd>
-          <kbd class="rounded bg-background px-1 py-0.5 ml-1">↓</kbd>
-          <span class="ml-1">to navigate</span>
+          ESC
+        </kbd>
+      </div>
+
+      <div
+        class="overflow-hidden transition-[height] duration-300 ease-out"
+        style="height: {contentHeight}px"
+      >
+        <div bind:clientHeight={contentHeight}>
+          {#if results.length > 0}
+            <div class="max-h-96 overflow-y-auto scrollbar-tranparent p-2">
+              {#each groupedResults as group (group.name)}
+                <div class="flex flex-col">
+                  <div
+                    class="px-3 pb-1.5 pt-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/60"
+                  >
+                    {group.name}
+                  </div>
+                  <ul class="flex flex-col gap-0.5">
+                    {#each group.items as { cmd, index } (cmd.id)}
+                      {@const isSelected = index === selectedIndex}
+                      <li>
+                        <button
+                          type="button"
+                          onclick={() => selectResult(cmd)}
+                          onmouseenter={() => (selectedIndex = index)}
+                          class={cn(
+                            "group flex w-full items-center gap-3 rounded-sm px-3 py-2 text-left text-sm transition-colors",
+                            isSelected
+                              ? "bg-primary/10 text-foreground"
+                              : "text-foreground hover:bg-muted/60"
+                          )}
+                        >
+                          <span
+                            class={cn(
+                              "inline-flex size-7 shrink-0 items-center justify-center rounded-sm transition-colors",
+                              isSelected
+                                ? "bg-primary/15 text-primary"
+                                : "bg-muted/60 text-muted-foreground"
+                            )}
+                          >
+                            <cmd.icon class="size-3.5" />
+                          </span>
+
+                          <span class="flex min-w-0 flex-1 flex-col">
+                            <span class="truncate text-sm font-medium text-foreground">
+                              {#each highlight(cmd.title, query) as part, i (i)}
+                                {#if part.hit}
+                                  <span class="text-primary">{part.text}</span>
+                                {:else}
+                                  {part.text}
+                                {/if}
+                              {/each}
+                            </span>
+                            {#if cmd.description}
+                              <span class="truncate text-xs text-muted-foreground">
+                                {#each highlight(cmd.description, query) as part, i (i)}
+                                  {#if part.hit}
+                                    <span class="text-primary/80">{part.text}</span>
+                                  {:else}
+                                    {part.text}
+                                  {/if}
+                                {/each}
+                              </span>
+                            {/if}
+                          </span>
+
+                          <ChevronRight
+                            class={cn(
+                              "size-3.5 shrink-0 transition-all",
+                              isSelected
+                                ? "translate-x-0.5 text-primary opacity-100"
+                                : "opacity-0 -translate-x-1"
+                            )}
+                          />
+                        </button>
+                      </li>
+                    {/each}
+                  </ul>
+                </div>
+              {/each}
+            </div>
+          {:else if query}
+            <div class="px-4 py-10 text-center">
+              <p
+                class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70"
+              >
+                No matches
+              </p>
+              <p class="mt-2 text-sm text-muted-foreground">
+                Nothing for
+                <span class="font-mono text-foreground">"{query}"</span>.
+              </p>
+            </div>
+          {/if}
+        </div>
+      </div>
+
+      <div
+        class="flex w-full items-center justify-between gap-2 border-t border-border/60 bg-muted/30 px-3 py-2"
+      >
+        <div class="flex items-center gap-3 text-[11px] text-muted-foreground/70">
+          <span class="inline-flex items-center gap-1.5">
+            <kbd
+              class="inline-flex h-4 select-none items-center rounded-xs border border-border/60 bg-background px-1 font-mono text-[10px]"
+            >
+              <CornerDownLeft class="size-2.5" />
+            </kbd>
+            <span class="font-mono uppercase tracking-[0.14em]">Open</span>
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <kbd
+              class="inline-flex h-4 select-none items-center rounded-xs border border-border/60 bg-background px-1 font-mono text-[10px]"
+            >
+              ↑
+            </kbd>
+            <kbd
+              class="inline-flex h-4 select-none items-center rounded-xs border border-border/60 bg-background px-1 font-mono text-[10px]"
+            >
+              ↓
+            </kbd>
+            <span class="font-mono uppercase tracking-[0.14em]">Navigate</span>
+          </span>
+        </div>
+        <span
+          class="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60"
+        >
+          {results.length} / {commands.length}
         </span>
       </div>
     </div>
-  </Dialog.Content>
-</Dialog.Root>
+  </div>
+{/if}

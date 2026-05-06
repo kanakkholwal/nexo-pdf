@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { trackFileUpload } from "$lib/analytics-tracker";
   import { cn } from "$lib/utils";
   import { UploadCloud } from "@lucide/svelte";
+  import type { Snippet } from "svelte";
   import { toast } from "svelte-sonner";
   import { fade } from "svelte/transition";
   import { buttonVariants } from "./button";
-  import { trackFileUpload } from "$lib/analytics-tracker";
+
   interface Props {
     accept?: string;
     multiple?: boolean;
@@ -13,10 +15,11 @@
     files?: File[];
     onFilesSelected?: (files: File[]) => void;
     class?: string;
-    icon?: import("svelte").Snippet;
-    title?: import("svelte").Snippet;
-    description?: import("svelte").Snippet;
-    action?: import("svelte").Snippet;
+    icon?: Snippet;
+    title?: Snippet;
+    description?: Snippet;
+    action?: Snippet;
+    hint?: Snippet;
   }
 
   let {
@@ -31,15 +34,14 @@
     title,
     description,
     action,
+    hint,
   }: Props = $props();
 
   let isDragging = $state(false);
   let fileInput: HTMLInputElement;
 
   export const click = () => {
-    if (!disabled && fileInput) {
-      fileInput.click();
-    }
+    if (!disabled && fileInput) fileInput.click();
   };
 
   function handleDragEnter(e: DragEvent) {
@@ -59,91 +61,79 @@
     e.preventDefault();
     e.stopPropagation();
   }
-
   function handleDrop(e: DragEvent) {
     if (disabled) return;
     e.preventDefault();
     e.stopPropagation();
     isDragging = false;
-
     if (e.dataTransfer?.files) {
       validateAndEmit(Array.from(e.dataTransfer.files));
     }
   }
-
   function handleInputChange(e: Event) {
     const target = e.target as HTMLInputElement;
-    if (target.files) {
-      validateAndEmit(Array.from(target.files));
-    }
-    // Reset input value to allow re-selecting the same file if needed
+    if (target.files) validateAndEmit(Array.from(target.files));
     target.value = "";
   }
 
   function validateAndEmit(newFiles: File[]) {
     const validFiles = newFiles.filter((file) => {
-      // 1. Check Size
       if (file.size > maxSize) {
         toast.error(`File ${file.name} is too large.`);
         return false;
       }
-
-      // 2. Check Type (Robust 'accept' parsing)
       if (accept && accept !== "*" && accept.trim() !== "") {
         const fileType = file.type.toLowerCase();
         const fileName = file.name.toLowerCase();
-
-        // Split accept string by comma and trim
         const acceptedTypes = accept
           .split(",")
           .map((t) => t.trim().toLowerCase());
-
         const isValid = acceptedTypes.some((type) => {
-          // A. Extension check (e.g. .jpg)
-          if (type.startsWith(".")) {
-            return fileName.endsWith(type);
-          }
-          // B. Wildcard mime check (e.g. image/*)
-          if (type.endsWith("/*")) {
-            const mainType = type.replace("/*", "");
-            return fileType.startsWith(mainType);
-          }
-          // C. Exact mime check (e.g. image/jpeg)
+          if (type.startsWith(".")) return fileName.endsWith(type);
+          if (type.endsWith("/*"))
+            return fileType.startsWith(type.replace("/*", ""));
           return fileType === type;
         });
-
         if (!isValid) {
           console.warn(
-            `File rejected: ${file.name} (Type: ${fileType}) does not match accept: ${accept}`,
+            `File rejected: ${file.name} (Type: ${fileType}) does not match accept: ${accept}`
           );
           return false;
         }
       }
-
       return true;
     });
-
     if (validFiles.length > 0) {
       files = [...files, ...validFiles];
-      
-      // Track file upload event in Google Analytics
       validFiles.forEach((file) => {
-        trackFileUpload(file.name, file.size, file.type || 'unknown');
+        trackFileUpload(file.name, file.size, file.type || "unknown");
       });
-      
-      if (onFilesSelected) onFilesSelected(validFiles);
+      onFilesSelected?.(validFiles);
     }
   }
+
+  let acceptLabel = $derived(
+    accept === "application/pdf"
+      ? "PDF only"
+      : accept
+          .split(",")
+          .map((t) => t.trim().replace("application/", "").replace(".", ""))
+          .filter(Boolean)
+          .join(" · ")
+          .toUpperCase()
+  );
 </script>
 
 <button
   type="button"
-  class="group relative flex w-full flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dotted transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
-  {isDragging
-    ? 'border-primary bg-primary/5 scale-[1.01] ring-4 ring-primary/10'
-    : 'border-border bg-card/75 hover:border-primary/50 hover:bg-card/90'}
-  {disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-  {className}"
+  class={cn(
+    "group relative flex w-full flex-col items-center justify-center overflow-hidden rounded-md border border-dashed transition-colors duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+    isDragging
+      ? "border-primary/60 bg-primary/5"
+      : "border-border/70 bg-muted/20 hover:border-primary/40 hover:bg-muted/30",
+    disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+    className
+  )}
   ondragenter={handleDragEnter}
   ondragleave={handleDragLeave}
   ondragover={handleDragOver}
@@ -151,49 +141,71 @@
   onclick={click}
   {disabled}
 >
-  <div class="flex flex-col items-center justify-center p-8 sm:p-12 md:p-16">
-    <div
-      class="mb-6 transition-transform duration-300 {isDragging
-        ? 'scale-110'
-        : 'group-hover:scale-110'}"
-    >
-      {#if icon}
-        {@render icon()}
-      {:else}
-        <div
-          class="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary shadow-inner"
-        >
-          <UploadCloud size={40} strokeWidth={1.5} />
-        </div>
-      {/if}
+  <div class="relative z-10 flex flex-col items-center gap-5 px-6 py-12 sm:py-16 md:py-20">
+    <div class="flex flex-col items-center gap-3">
+      <span
+        class={cn(
+          "inline-flex size-12 items-center justify-center rounded-sm transition-colors",
+          isDragging
+            ? "bg-primary/15 text-primary"
+            : "bg-muted/60 text-foreground/80 group-hover:bg-primary/10 group-hover:text-primary"
+        )}
+      >
+        {#if icon}
+          {@render icon()}
+        {:else}
+          <UploadCloud class="size-5" strokeWidth={1.5} />
+        {/if}
+      </span>
+      <span
+        class={cn(
+          "font-mono text-[10px] font-medium uppercase tracking-[0.2em] transition-colors",
+          isDragging ? "text-primary" : "text-muted-foreground/70"
+        )}
+      >
+        {isDragging ? "Drop to upload" : "Upload"} · {acceptLabel}
+      </span>
     </div>
-    <div class="mb-3 text-center">
+
+    <div class="flex flex-col items-center gap-2 text-center">
       {#if title}
         {@render title()}
       {:else}
-        <h3 class="text-2xl font-bold tracking-tight text-foreground">
-          Upload Files
+        <h3 class="text-xl font-medium tracking-tight text-foreground sm:text-2xl">
+          Drop files here
         </h3>
       {/if}
-    </div>
-    <div class="mb-8 max-w-xs text-center">
       {#if description}
         {@render description()}
       {:else}
-        <p class="text-sm text-muted-foreground">
-          Drag & drop your files here, or click to browse.
+        <p class="max-w-sm text-sm leading-relaxed text-muted-foreground">
+          Drag and drop, paste, or click to browse from your device. Files stay
+          on this machine.
         </p>
       {/if}
     </div>
-    <div class="relative z-10">
+
+    <div class="relative z-10 flex flex-col items-center gap-3">
       {#if action}
         {@render action()}
       {:else}
-        <div
-          class={cn(buttonVariants({ variant: "dark" }))}
+        <span
+          class={cn(
+            buttonVariants({ variant: "default", size: "default" }),
+            "rounded-sm bg-primary px-5 text-primary-foreground shadow-sm shadow-primary/15 hover:bg-primary/90"
+          )}
         >
-          Select Files
-        </div>
+          Select files
+        </span>
+      {/if}
+      {#if hint}
+        {@render hint()}
+      {:else if maxSize !== Infinity}
+        <p
+          class="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground/60"
+        >
+          Max {(maxSize / (1024 * 1024)).toFixed(0)} MB per file
+        </p>
       {/if}
     </div>
   </div>
@@ -209,7 +221,7 @@
 
   {#if isDragging}
     <div
-      class="pointer-events-none absolute inset-0 z-0 bg-primary/5 backdrop-blur-[1px]"
+      class="pointer-events-none absolute inset-0 z-0 bg-primary/5"
       transition:fade={{ duration: 150 }}
     ></div>
   {/if}

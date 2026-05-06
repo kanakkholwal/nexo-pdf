@@ -1,37 +1,30 @@
 <script lang="ts">
   import Logo from "$components/Logo.svelte";
   import SearchCommandMenu from "$components/layout/SearchCommandMenu.svelte";
-  import { Button } from "$components/ui/button";
+  import ThemeToggle from "$components/ThemeToggle.svelte";
   import { Trigger as SidebarTrigger } from "$components/ui/sidebar";
-  import { Moon, Sun } from "@lucide/svelte";
-  import { mode, toggleMode } from "mode-watcher";
-
-
+  import { config } from "$constants/app";
 </script>
 
 <header
-  class="sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border/40 bg-card/80 px-4 backdrop-blur-md md:hidden"
+  class="sticky top-0 z-50 flex w-full flex-col border-b border-border/60 bg-card/70 backdrop-blur-2xl backdrop-saturate-150 supports-backdrop-filter:bg-card/55 md:hidden"
+  style="padding-top: max(env(safe-area-inset-top), 0.25rem);"
 >
-  <a
-    href="/"
-    class="group flex items-center gap-3 transition-opacity hover:opacity-80"
-  >
-    <Logo size="md" />
-  </a>
-  <div class="inline-flex items-center gap-2">
-  <SearchCommandMenu iconOnly />
-    <Button
-      variant="ghost"
-      size="icon"
-      onclick={toggleMode}
-      class="rounded-full"
+  <div class="flex h-12 items-center justify-between gap-2 px-3">
+    <a
+      href="/"
+      class="flex items-center gap-2 rounded-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+      aria-label={`${config.appName} home`}
     >
-      {#if mode.current === "light"}
-        <Sun size={16} />
-      {:else}
-        <Moon size={16} />
-      {/if}
-    </Button>
-    <SidebarTrigger />
+      <Logo size="md" />
+    </a>
+
+    <div class="flex items-center gap-1">
+      <SearchCommandMenu iconOnly />
+      <ThemeToggle class="size-9 rounded-sm" />
+      <SidebarTrigger
+        class="inline-flex size-9 items-center justify-center rounded-sm text-foreground transition-colors hover:bg-muted/60"
+      />
+    </div>
   </div>
 </header>
