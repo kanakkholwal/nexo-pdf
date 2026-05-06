@@ -16,15 +16,68 @@ env:
   PUBLIC_GOOGLE_ANALYTICS_ID: ""
 
 jobs:
-  # Windows build and release using Tauri's GitHub Action. This is separate to ensure we can sign the Windows executable properly.
+  # Pre-create the release with auto-generated notes (commits + PRs since the
+  # previous tag), prefixed by a minimal header. Subsequent platform jobs only
+  # attach assets — they don't rewrite the body.
+  prepare-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        run: echo "tag=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Compose release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          GENERATED=$(gh api \
+            repos/${{ github.repository }}/releases/generate-notes \
+            -f tag_name="$TAG" \
+            --jq .body)
+
+          {
+            echo "Privacy-first PDF toolkit. Runs entirely on your device."
+            echo
+            echo "**Downloads** — Windows: \`.msi\` · \`.exe\` · \`.msixbundle\`  •  macOS: \`.dmg\`  •  Linux: \`.AppImage\` · \`.deb\` · \`.rpm\`"
+            echo
+            echo "$GENERATED"
+          } > release-notes.md
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "Orbit PDF $TAG" \
+              --notes-file release-notes.md
+          else
+            gh release create "$TAG" \
+              --title "Orbit PDF $TAG" \
+              --notes-file release-notes.md
+          fi
+
   build-windows:
+    needs: prepare-release
     permissions:
       contents: write
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      #  Bun
       - uses: oven-sh/setup-bun@v2
       - uses: actions/cache@v4
         with:
@@ -38,41 +91,58 @@ jobs:
         run: bun install
       - name: Clean Rust build
         run: cd src-tauri && cargo clean
+
       - name: Install msixbundle-cli
         run: cargo install msixbundle-cli
-      - name: Build and Release (Windows)
+
+      - name: Build and attach (Windows)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ inputs.tag || github.ref_name }}
-          releaseName: "Orbit PDF - Release ${{ inputs.tag || github.ref_name }}"
-          releaseBody: "## 🎉 Orbit PDF Release ${{ inputs.tag || github.ref_name }}\n\n### 📦 Available Downloads\n\n**Windows**: Download the `.msi` installer or `.exe` for your system.\n**macOS**: Download the `.dmg` for Intel/Apple Silicon Macs.\n**Linux**: Download the `.AppImage` for universal Linux support.\n\n### 🚀 Installation\n- **Windows**: Run the installer and follow the prompts.\n- **macOS**: Mount the `.dmg` file and drag Orbit PDF to Applications.\n- **Linux**: Make the AppImage executable and run it.\n\n### ⚠️ Important Note on Code Signing\nThese applications are signed with a **self-signed/dummy signing key** for testing purposes. We do not currently have the budget for professional code signing certificates. This means:\n- You may see security warnings when installing on Windows or macOS\n- This is normal and expected for open-source projects without commercial signing\n- The code is safe to use and can be verified from our public repository\n\n### 📝 Additional Notes\n- Visit our [documentation](https://orbit.nexonauts.com/docs) for more details.\n- Report issues on our [GitHub repository](https://github.com/kanakkholwal/orbit/issues).\n\n**Happy PDF processing! 📄✨**"
+          tagName: ${{ needs.prepare-release.outputs.tag }}
+          releaseName: "Orbit PDF ${{ needs.prepare-release.outputs.tag }}"
           releaseDraft: false
           prerelease: false
-      - name: Install msixbundle-cli
-        run: cargo install msixbundle-cli
 
+      # Cross-arch (arm64) requires adding `aarch64-pc-windows-msvc` to the
+      # tauri-action above; for now we ship x64 only.
       - name: Build MSIX bundle
-        run: bun tauri:windows:build --arch x64,arm64 --runner bun
+        run: msixbundle-cli --arch x64
+        shell: pwsh
 
-      - name: Upload artifacts
+      - name: Attach MSIX to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+        run: |
+          $bundles = Get-ChildItem -Path src-tauri/target/msix -Filter *.msixbundle -Recurse
+          if (-not $bundles) {
+            Write-Error "No .msixbundle artifacts found"
+            exit 1
+          }
+          foreach ($b in $bundles) {
+            gh release upload $env:TAG "$($b.FullName)" --clobber
+          }
+        shell: pwsh
+
+      - name: Upload MSIX as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: msix-bundle
           path: src-tauri/target/msix/*.msixbundle
+          if-no-files-found: error
 
-  # Linux build and release using Tauri's GitHub Action. This is separate to ensure we can build the Linux AppImage properly.
   build-linux:
+    needs: prepare-release
     permissions:
       contents: write
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      #  Bun
       - uses: oven-sh/setup-bun@v2
       - uses: actions/cache@v4
         with:
@@ -96,28 +166,26 @@ jobs:
             libgtk-3-dev
       - name: Clean Rust build
         run: cd src-tauri && cargo clean
-      - name: Build and Release (Linux)
+      - name: Build and attach (Linux)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ inputs.tag || github.ref_name }}
-          releaseName: "Orbit PDF - Release ${{ inputs.tag || github.ref_name }}"
-          releaseBody: "## 🎉 Orbit PDF Release ${{ inputs.tag || github.ref_name }}\n\n### 📦 Available Downloads\n\n**Windows**: Download the `.msi` installer or `.exe` for your system.\n**macOS**: Download the `.dmg` for Intel/Apple Silicon Macs.\n**Linux**: Download the `.AppImage` for universal Linux support.\n\n### 🚀 Installation\n- **Windows**: Run the installer and follow the prompts.\n- **macOS**: Mount the `.dmg` file and drag Orbit PDF to Applications.\n- **Linux**: Make the AppImage executable and run it.\n\n### ⚠️ Important Note on Code Signing\nThese applications are signed with a **self-signed/dummy signing key** for testing purposes. We do not currently have the budget for professional code signing certificates. This means:\n- You may see security warnings when installing on Windows or macOS\n- This is normal and expected for open-source projects without commercial signing\n- The code is safe to use and can be verified from our public repository\n\n### 📝 Additional Notes\n- Visit our [documentation](https://orbit.nexonauts.com/docs) for more details.\n- Report issues on our [GitHub repository](https://github.com/kanakkholwal/orbit/issues).\n\n**Happy PDF processing! 📄✨**"
+          tagName: ${{ needs.prepare-release.outputs.tag }}
+          releaseName: "Orbit PDF ${{ needs.prepare-release.outputs.tag }}"
           releaseDraft: false
           prerelease: false
 
-  # macOS build and release using Tauri's GitHub Action. This is separate to ensure we can code sign the macOS app properly.
   build-macos:
+    needs: prepare-release
     permissions:
       contents: write
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
-      #  Bun
       - uses: oven-sh/setup-bun@v2
       - uses: actions/cache@v4
         with:
@@ -131,15 +199,14 @@ jobs:
         run: bun install
       - name: Clean Rust build
         run: cd src-tauri && cargo clean
-      - name: Build and Release (macOS)
+      - name: Build and attach (macOS)
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          tagName: ${{ inputs.tag || github.ref_name }}
-          releaseName: "Orbit PDF - Release ${{ inputs.tag || github.ref_name }}"
-          releaseBody: "## 🎉 Orbit PDF Release ${{ inputs.tag || github.ref_name }}\n\n### 📦 Available Downloads\n\n**Windows**: Download the `.msi` installer or `.exe` for your system.\n**macOS**: Download the `.dmg` for Intel/Apple Silicon Macs.\n**Linux**: Download the `.AppImage` for universal Linux support.\n\n### 🚀 Installation\n- **Windows**: Run the installer and follow the prompts.\n- **macOS**: Mount the `.dmg` file and drag Orbit PDF to Applications.\n- **Linux**: Make the AppImage executable and run it.\n\n### ⚠️ Important Note on Code Signing\nThese applications are signed with a **self-signed/dummy signing key** for testing purposes. We do not currently have the budget for professional code signing certificates. This means:\n- You may see security warnings when installing on Windows or macOS\n- This is normal and expected for open-source projects without commercial signing\n- The code is safe to use and can be verified from our public repository\n\n### 📝 Additional Notes\n- Visit our [documentation](https://orbit.nexonauts.com/docs) for more details.\n- Report issues on our [GitHub repository](https://github.com/kanakkholwal/orbit/issues).\n\n**Happy PDF processing! 📄✨**"
+          tagName: ${{ needs.prepare-release.outputs.tag }}
+          releaseName: "Orbit PDF ${{ needs.prepare-release.outputs.tag }}"
           releaseDraft: false
           prerelease: false
