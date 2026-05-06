@@ -1,14 +1,13 @@
 <script lang="ts">
-  import Button from "$components/ui/button/button.svelte";
+  import { ToolBar, ToolFooter, ToolPanel } from "$components/tool";
+  import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import { Label } from "$components/ui/label";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import {
     ArrowRight,
-    LayoutGrid,
-    Loader2,
+    LoaderCircle,
     Settings2,
-    Trash2,
   } from "@lucide/svelte";
   import Sortable from "sortablejs";
   import { slide } from "svelte/transition";
@@ -17,7 +16,6 @@
 
   const store = new OrganizePdfState();
 
-  let sortableContainer: HTMLElement;
   let customOrderInput = $state("");
   let showAdvanced = $state(false);
 
@@ -32,7 +30,6 @@
           newIndex !== undefined &&
           oldIndex !== newIndex
         ) {
-          // Update store state to match visual change
           store.movePage(oldIndex, newIndex);
         }
       },
@@ -43,7 +40,7 @@
   function handleCustomOrder() {
     if (customOrderInput) {
       store.applyCustomOrder(customOrderInput);
-      customOrderInput = ""; // Reset input
+      customOrderInput = "";
       showAdvanced = false;
     }
   }
@@ -56,88 +53,83 @@
     onFilesSelected={(files) => store.loadFile(files[0])}
   />
 {:else}
-  <div
-    class="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-3"
-  >
-    <div class="flex items-center gap-3 overflow-hidden max-w-50 sm:max-w-xs">
-      <div
-        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600"
-      >
-        <LayoutGrid size={18} />
-      </div>
-      <div class="min-w-0">
-        <h3 class="truncate text-sm font-medium">{store.state.file.name}</h3>
-        <p class="text-[10px] text-muted-foreground">
-          {store.state.pages.length} Pages
-        </p>
-      </div>
-    </div>
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pages.length}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
+    >
+      {#snippet actions()}
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => (showAdvanced = !showAdvanced)}
+          aria-expanded={showAdvanced}
+          class="rounded-sm"
+        >
+          <Settings2 class="size-3.5" />
+          <span class="hidden sm:inline">Advanced</span>
+        </Button>
+      {/snippet}
+    </ToolBar>
 
-    <div class="flex items-center gap-2">
-      <Button
-        variant="outline"
-        size="sm"
-        onclick={() => (showAdvanced = !showAdvanced)}
-      >
-        <Settings2 size={14} /> <span class="hidden sm:inline">Advanced</span>
-      </Button>
-      <Button
-        onclick={() => store.reset()}
-        variant="destructive_soft"
-        size="sm"
-        title="Remove File"
-      >
-        <Trash2 size={18} />
-      </Button>
-    </div>
-  </div>
-
-  {#if showAdvanced}
-    <div class="border-b border-border bg-muted/30 p-4" transition:slide>
-      <div class="mx-auto max-w-lg flex items-end gap-2">
-        <div class="flex-1 space-y-1">
-          <Label for="order-input" class="text-xs"
-            >Manual Page Order (e.g. 1, 3, 2)</Label
-          >
-          <Input
-            id="order-input"
-            type="text"
-            bind:value={customOrderInput}
-            placeholder="e.g. 1, 2, 1, 3 (Duplicates allowed)"
-            class="h-9 w-full rounded-md"
-          />
-        </div>
-        <Button variant="dark" onclick={handleCustomOrder}>Apply</Button>
+    {#if showAdvanced}
+      <div transition:slide={{ duration: 220 }}>
+        <ToolPanel title="Manual order">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div class="flex flex-1 flex-col gap-1.5">
+              <Label
+                for="order-input"
+                class="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                Page order
+              </Label>
+              <Input
+                id="order-input"
+                type="text"
+                bind:value={customOrderInput}
+                placeholder="e.g. 1, 2, 1, 3 (duplicates allowed)"
+                class="h-10 rounded-sm font-mono text-sm"
+              />
+            </div>
+            <Button
+              onclick={handleCustomOrder}
+              class="rounded-sm bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Apply
+            </Button>
+          </div>
+        </ToolPanel>
       </div>
-    </div>
-  {/if}
+    {/if}
 
-  <div class="flex-1 overflow-y-auto bg-muted/10 p-4 sm:p-6">
-    <div class="mx-auto max-w-5xl">
+    <ToolPanel title="Pages" counter={store.state.pages.length}>
       <div
         use:setupSortable
-        class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+        class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
       >
         {#each store.state.pages as page, i (page.id)}
           <PageThumbnail {store} {page} index={i} />
         {/each}
       </div>
-    </div>
-  </div>
+    </ToolPanel>
 
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      size="lg"
-      variant="dark"
-      class="px-8 h-11 min-w-50"
-      onclick={() => store.save()}
-      disabled={store.isProcessing}
-    >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin" /> {store.progress}
-      {:else}
-        Save Organized PDF <ArrowRight size={18} />
-      {/if}
-    </Button>
+    <ToolFooter hint={store.isProcessing ? store.progress : "Save reordered PDF"}>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.save()}
+        disabled={store.isProcessing}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress}
+        {:else}
+          Save organized PDF
+          <ArrowRight class="size-4" />
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

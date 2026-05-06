@@ -141,7 +141,7 @@
   onclick={click}
   {disabled}
 >
-  <div class="relative z-10 flex flex-col items-center gap-5 px-6 py-12 sm:py-16 md:py-20">
+  <div class="relative z-5 flex flex-col items-center gap-5 px-6 py-12 sm:py-16 md:py-20">
     <div class="flex flex-col items-center gap-3">
       <span
         class={cn(

@@ -8,6 +8,7 @@
   import {
     ArrowRight,
     ArrowUpRight,
+    Github,
     Globe,
     Lock,
     Zap
@@ -104,7 +105,7 @@
             Start Processing
             <ArrowRight/>
           </Button>
-          <!-- <Button
+          <Button
             href={config.github}
             target="_blank"
             rel="noopener noreferrer"
@@ -114,7 +115,7 @@
           >
             <Github size={16} />
             Star on GitHub
-          </Button> -->
+          </Button>
         </div>
 
         <dl

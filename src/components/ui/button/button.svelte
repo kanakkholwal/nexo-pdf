@@ -38,9 +38,9 @@
       size: {
         default: "h-10 px-5 py-2.5 [&>svg]:size-5",
         xs: "h-7 px-4 py-2 [&>svg]:size-3",
-        sm: "h-8 gap-1.5 rounded-md px-3 [&>svg]:size-4 text-xs font-medium",
-        lg: "h-10 rounded-md px-6 [&>svg]:px-4 [&>svg]:size-5",
-        xl: "h-12 rounded-md px-8 [&>svg]:px-5 [&>svg]:size-6 text-lg font-medium",
+        sm: "h-8 gap-1.5 rounded-md px-3  text-xs font-medium",
+        lg: "h-10 rounded-md px-6 [&>svg]:size-5",
+        xl: "h-12 rounded-md px-8 [&>svg]:size-6 text-lg font-medium",
         icon: "size-10 [&>svg]:size-5",
         "icon-xs": "size-5 rounded-sm [&>svg]:size-3",
         "icon-sm": "size-8 [&>svg]:size-4",

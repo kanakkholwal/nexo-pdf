@@ -1,24 +1,23 @@
 <script lang="ts">
-  import Button from "$components/ui/button/button.svelte";
+  import { ToolBar, ToolFooter, ToolPanel } from "$components/tool";
+  import { Button } from "$components/ui/button";
   import { Input } from "$components/ui/input";
   import { Label } from "$components/ui/label";
   import UploadArea from "$components/ui/UploadArea.svelte";
+  import { cn } from "$lib/utils";
   import {
     CheckCircle2,
     FileStack,
     Grid,
     Layers,
-    Loader2,
+    LoaderCircle,
     RefreshCcw,
-    Scissors,
-    Trash2,
   } from "@lucide/svelte";
   import { SplitState } from "./helper.svelte";
 
   const store = new SplitState();
   let uploadArea: ReturnType<typeof UploadArea>;
 
-  // Visual Page Thumbnail Component (Inline for simplicity or extract)
   function lazy(node: HTMLElement, pageIndex: number) {
     const obs = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
@@ -30,6 +29,12 @@
     obs.observe(node);
     return { destroy: () => obs.disconnect() };
   }
+
+  const modes = [
+    { id: "range", label: "Range", icon: Layers },
+    { id: "visual", label: "Visual", icon: Grid },
+    { id: "n-times", label: "N-pages", icon: FileStack },
+  ] as const;
 </script>
 
 <UploadArea
@@ -39,176 +44,163 @@
   onFilesSelected={(files) => store.loadFile(files[0])}
   class={store.file ? "hidden" : ""}
 />
+
 {#if store.file}
-  <div class="sticky top-0 z-20 border-b border-border rounded-lg p-4 backdrop-blur bg-accent">
-    <div
-      class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.fileName}
+      count={store.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
     >
-      <div class="flex items-center gap-3">
-        <div
-          class="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600"
+      {#snippet actions()}
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => uploadArea.click()}
+          class="rounded-sm"
         >
-          <Scissors size={20} />
-        </div>
-        <div>
-          <h3
-            class="text-sm font-semibold text-foreground truncate max-w-50"
-            title={store.fileName}
+          <RefreshCcw class="size-3.5" />
+          <span class="hidden sm:inline">Change</span>
+        </Button>
+      {/snippet}
+    </ToolBar>
+
+    <ToolPanel title="Mode">
+      <div class="flex rounded-sm bg-muted/40 p-1">
+        {#each modes as mode}
+          <button
+            type="button"
+            onclick={() => (store.mode = mode.id)}
+            class={cn(
+              "inline-flex flex-1 items-center justify-center gap-1.5 rounded-sm px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors",
+              store.mode === mode.id
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
           >
-            {store.fileName}
-          </h3>
-          <p class="text-xs text-muted-foreground">
-            {store.pageCount} Pages
-          </p>
-        </div>
+            <mode.icon class="size-3" />
+            {mode.label}
+          </button>
+        {/each}
       </div>
+    </ToolPanel>
 
-      <div class="flex items-center gap-2">
-        <Button variant="secondary" onclick={() => uploadArea.click()}>
-          <RefreshCcw size={16} /> Change File
-        </Button>
-        <Button variant="destructive_soft" onclick={() => store.reset()}>
-          <Trash2 size={16} /> Clear
-        </Button>
-      </div>
-    </div>
-
-    <div class="mt-6 flex space-x-1 rounded-xl bg-muted/50 p-1">
-      <Button
-        variant={store.mode === "range" ? "outline" : "ghost"}
-        onclick={() => (store.mode = "range")}
-      >
-        <Layers size={16} /> Range
-      </Button>
-      <Button
-        variant={store.mode === "visual" ? "outline" : "ghost"}
-        onclick={() => (store.mode = "visual")}
-      >
-        <Grid size={16} /> Visual
-      </Button>
-      <Button
-        variant={store.mode === "n-times" ? "outline" : "ghost"}
-        onclick={() => (store.mode = "n-times")}
-      >
-        <FileStack size={16} /> N-Pages
-      </Button>
-    </div>
-  </div>
-
-  <div class="flex-1 overflow-y-auto bg-muted/10 py-6">
     {#if store.mode === "range"}
-      <div class="mx-auto max-w-lg space-y-6">
-        <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <Label
-            for="range-input"
-            class="mb-2"
-          >
-            Enter Page Range
-          </Label>
+      <ToolPanel title="Page range">
+        <div class="flex flex-col gap-2">
+          <Label for="range-input" class="sr-only">Page range</Label>
           <Input
             id="range-input"
             type="text"
             placeholder="e.g. 1-5, 8, 11-13"
             bind:value={store.rangeInput}
-            class="flex h-12 w-full rounded-md"
+            class="h-11 rounded-sm font-mono text-sm"
           />
-          <p class="mt-2 text-xs text-muted-foreground">
-            Use commas for separate pages (<code>1, 3, 5</code>) and hyphens for
-            ranges (<code>1-5</code>).
+          <p class="text-xs leading-relaxed text-muted-foreground">
+            Use commas for separate pages
+            <code class="rounded-xs bg-muted/60 px-1 font-mono text-[10px] text-foreground">1, 3, 5</code>
+            and hyphens for ranges
+            <code class="rounded-xs bg-muted/60 px-1 font-mono text-[10px] text-foreground">1-5</code>.
           </p>
         </div>
-      </div>
+      </ToolPanel>
     {:else if store.mode === "n-times"}
-      <div class="mx-auto max-w-lg space-y-6">
-        <div class="rounded-xl border border-border bg-card p-4 shadow-sm">
-          <Label
-            for="n-input"
-            class="mb-2"
-          >
-            Split every N pages
-          </Label>
-          <div class="flex items-center gap-4">
-            <Input
-              id="n-input"
-              type="number"
-              min="1"
-              bind:value={store.nTimesValue}
-              class="flex h-12 w-32 rounded-md"
-            />
-            <span class="text-sm text-muted-foreground">pages per file</span>
-          </div>
-          <p
-            class="mt-4 text-xs text-muted-foreground border-l-2 border-primary/50 pl-3"
-          >
-            This will create multiple PDF files, each containing {store.nTimesValue}
-            pages. The result will be a ZIP file.
-          </p>
+      <ToolPanel title="Chunk size">
+        <div class="flex items-center gap-3">
+          <Input
+            id="n-input"
+            type="number"
+            min="1"
+            bind:value={store.nTimesValue}
+            class="h-11 w-32 rounded-sm font-mono text-sm tabular-nums"
+          />
+          <span class="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            pages per file
+          </span>
         </div>
-      </div>
+        <p
+          class="mt-3 border-l-2 border-primary/40 pl-3 text-xs leading-relaxed text-muted-foreground"
+        >
+          Creates multiple PDFs of {store.nTimesValue} pages each, packaged as a single ZIP.
+        </p>
+      </ToolPanel>
     {:else if store.mode === "visual"}
-      <div
-        class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+      <ToolPanel
+        title="Pages"
+        counter={`${store.selectedPages.size} / ${store.pageCount}`}
       >
-        {#each { length: store.pageCount } as _, i}
-          <button
-            use:lazy={i}
-            onclick={() => store.togglePageSelection(i)}
-            class="group relative flex aspect-3/4 cursor-pointer flex-col overflow-hidden rounded-xl border-2 transition-all hover:shadow-md {store.selectedPages.has(
-              i,
-            )
-              ? 'border-primary ring-2 ring-primary/20'
-              : 'border-transparent hover:border-primary/50'}"
-          >
-            <canvas class="h-full w-full object-contain"></canvas>
-
-            <div
-              class="absolute inset-0 bg-black/0 transition-colors {store.selectedPages.has(
-                i,
-              )
-                ? 'bg-primary/10'
-                : 'group-hover:bg-black/5'}"
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+          {#each { length: store.pageCount } as _, i}
+            {@const isSelected = store.selectedPages.has(i)}
+            <button
+              type="button"
+              use:lazy={i}
+              onclick={() => store.togglePageSelection(i)}
+              aria-pressed={isSelected}
+              class={cn(
+                "group relative flex aspect-3/4 cursor-pointer flex-col overflow-hidden rounded-sm border transition-colors",
+                isSelected
+                  ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                  : "border-border/60 bg-card hover:border-primary/40"
+              )}
             >
-              <div class="absolute right-2 top-2">
-                {#if store.selectedPages.has(i)}
-                  <div
-                    class="rounded-full bg-primary text-primary-foreground p-0.5 shadow-sm"
-                  >
-                    <CheckCircle2 size={16} />
-                  </div>
-                {:else}
-                  <div
-                    class="h-5 w-5 rounded-full border-2 border-muted-foreground/50 bg-background/50"
-                  ></div>
-                {/if}
+              <canvas class="h-full w-full object-contain"></canvas>
+
+              <div
+                class={cn(
+                  "absolute inset-0 transition-colors",
+                  isSelected ? "bg-primary/5" : "group-hover:bg-foreground/5"
+                )}
+              >
+                <div class="absolute right-1.5 top-1.5">
+                  {#if isSelected}
+                    <span
+                      class="inline-flex size-5 items-center justify-center rounded-xs bg-primary text-primary-foreground shadow-sm"
+                    >
+                      <CheckCircle2 class="size-3.5" />
+                    </span>
+                  {:else}
+                    <span
+                      class="inline-block size-4 rounded-xs border border-border/80 bg-background/60"
+                    ></span>
+                  {/if}
+                </div>
               </div>
-            </div>
 
-            <div
-              class="absolute bottom-0 left-0 right-0 bg-card/90 py-1 text-center text-[10px] font-medium text-muted-foreground backdrop-blur-sm"
-            >
-              Page {i + 1}
-            </div>
-          </button>
-        {/each}
-      </div>
+              <div
+                class="absolute inset-x-0 bottom-0 bg-card/90 py-1 text-center font-mono text-[10px] tabular-nums text-muted-foreground backdrop-blur-sm"
+              >
+                {String(i + 1).padStart(2, "0")}
+              </div>
+            </button>
+          {/each}
+        </div>
+      </ToolPanel>
     {/if}
-  </div>
 
-  <div class="border-t border-border bg-background p-4 text-center">
-    <Button
-      size="lg"
-      variant="dark"
-      class="px-8 h-11 min-w-50"
-      onclick={() => store.processSplit()}
-      disabled={store.isProcessing ||
-        (store.mode === "range" && !store.rangeInput) ||
-        (store.mode === "visual" && store.selectedPages.size === 0)}
+    <ToolFooter
+      hint={store.isProcessing
+        ? store.progress.text
+        : store.mode === "n-times"
+          ? "Split & package as ZIP"
+          : `Selected ${store.mode === "visual" ? store.selectedPages.size : "range"}`}
     >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin" /> {store.progress.text}
-      {:else}
-        {store.mode === "n-times" ? "Split & Zip" : "Download Selection"}
-      {/if}
-    </Button>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.processSplit()}
+        disabled={store.isProcessing ||
+          (store.mode === "range" && !store.rangeInput) ||
+          (store.mode === "visual" && store.selectedPages.size === 0)}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress.text}
+        {:else}
+          {store.mode === "n-times" ? "Split & ZIP" : "Download"}
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}
