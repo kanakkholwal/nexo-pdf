@@ -1,15 +1,9 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { formatBytes } from "$utils/helper";
-  import {
-    AlertTriangle,
-    FileCode2,
-    FileText,
-    Loader2,
-    Trash2, // Icon representing raw text/code
-    Zap
-  } from "@lucide/svelte";
+  import { AlertTriangle, LoaderCircle, Plus, Zap } from "@lucide/svelte";
   import { PdfToTextState } from "./helper.svelte";
 
   const store = new PdfToTextState();
@@ -23,77 +17,90 @@
   onFilesSelected={(files) => store.addFiles(files)}
   class={store.files.length > 0 ? "hidden" : ""}
 />
+
 {#if store.files.length > 0}
-  <div class="sticky top-0 z-20 border-b border-border bg-accent/50 p-4 rounded-lg">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 class="text-sm font-semibold flex items-center gap-2">
-        <FileCode2 size={18} class="text-primary" />
-        {store.files.length} Document{store.files.length > 1 ? "s" : ""} Selected
-      </h2>
-      <div class="flex items-center gap-2">
-        <Button variant="ghost" onclick={() => uploadArea.click()} disabled={store.isProcessing}>
-          <Zap size={16} /> Add More
-        </Button>
-        <Button variant="ghost" onclick={() => store.reset()} disabled={store.isProcessing}>
-          <Trash2 size={16} /> Clear All
-        </Button>
-      </div>
-    </div>
-  </div>
-
-  <div class="flex-1 overflow-y-auto bg-muted/10 p-6 space-y-8">
-    <div class="max-w-3xl mx-auto space-y-6">
-      
-      <div class="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 shadow-sm flex gap-3 text-amber-600 dark:text-amber-400">
-        <AlertTriangle size={20} class="shrink-0 mt-0.5" />
-        <div class="text-sm leading-relaxed">
-            <strong>Note:</strong> This tool works ONLY with digitally created PDFs. If your PDF is a scanned image or photograph, it contains no digital text layer. For scanned documents, please use the <a href="/tools/ocr-pdf" class="underline font-semibold hover:text-amber-500">OCR PDF tool</a> instead.
-        </div>
-      </div>
-
-      <div class="grid gap-3">
-        {#each store.files as file (file.id)}
-          <div class="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-xs transition-colors hover:border-primary/30">
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-              <div class="bg-primary/10 text-primary p-2 rounded-md shrink-0">
-                  <FileText size={20} />
-              </div>
-              <div class="min-w-0">
-                <div class="truncate font-medium text-sm">{file.file.name}</div>
-                <div class="text-xs text-muted-foreground">{formatBytes(file.originalSize)}</div>
-              </div>
-            </div>
-            
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 ml-2"
-              onclick={() => store.removeFile(file.id)}
-              disabled={store.isProcessing}
-            >
-              <Trash2 size={18} />
-            </Button>
-          </div>
-        {/each}
-      </div>
-
-    
-    </div>
-  </div>
-
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      size="lg"
-      variant="dark"
-      class="px-8 h-11 min-w-50"
-      onclick={() => store.process()}
-      disabled={store.isProcessing || store.files.length === 0}
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label="Documents"
+      count={store.files.length}
+      onReset={() => store.reset()}
+      resetLabel="Clear all"
     >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin mr-2" size={18} /> {store.progress.text}
-      {:else}
-        Extract Text <Zap size={18} class="ml-2 fill-current" />
-      {/if}
-    </Button>
+      {#snippet actions()}
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => uploadArea.click()}
+          disabled={store.isProcessing}
+          class="rounded-sm"
+        >
+          <Plus class="size-3.5" />
+          <span class="hidden sm:inline">Add</span>
+        </Button>
+      {/snippet}
+    </ToolBar>
+
+    <ToolPanel title="Note">
+      <div
+        class="flex items-start gap-3 rounded-sm border border-warning/30 bg-warning/5 px-4 py-3"
+      >
+        <span
+          class="inline-flex size-7 shrink-0 items-center justify-center rounded-sm bg-warning/15 text-warning"
+        >
+          <AlertTriangle class="size-3.5" />
+        </span>
+        <p class="text-xs leading-relaxed text-muted-foreground">
+          This tool only works on digitally created PDFs. For scanned images,
+          use the
+          <a
+            href="/tools/ocr-pdf"
+            class="font-medium text-warning underline underline-offset-2 hover:text-warning/80"
+          >
+            OCR PDF tool
+          </a>
+          instead.
+        </p>
+      </div>
+    </ToolPanel>
+
+    <ToolPanel title="Files" counter={store.files.length}>
+      <ul class="flex flex-col gap-2">
+        {#each store.files as file (file.id)}
+          <li>
+            <FileRow
+              name={file.file.name}
+              onRemove={!store.isProcessing
+                ? () => store.removeFile(file.id)
+                : undefined}
+            >
+              <span class="font-mono tabular-nums">
+                {formatBytes(file.originalSize)}
+              </span>
+            </FileRow>
+          </li>
+        {/each}
+      </ul>
+    </ToolPanel>
+
+    <ToolFooter
+      hint={store.isProcessing
+        ? store.progress.text
+        : `Extract from ${store.files.length} document${store.files.length === 1 ? "" : "s"}`}
+    >
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.process()}
+        disabled={store.isProcessing || store.files.length === 0}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress.text}
+        {:else}
+          <Zap class="size-4" />
+          Extract text
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from "$components/ui/button/button.svelte";
+  import { Button } from "$components/ui/button";
   import {
     Dialog,
     DialogContent,
@@ -16,17 +16,14 @@
   import Viewer from "./Viewer.svelte";
   const store = new BookmarkPdfState();
 
-  // Modal State
   let showModal = $state(false);
   let editingId = $state<string | null>(null);
   let parentId = $state<string | null>(null);
   let modalTitle = $state("");
 
-  // Listen for events from children
   onMount(() => {
     const handleEdit = (e: any) => {
       if (e.detail.nodeId) {
-        // Edit existing
         const findNode = (nodes: BookmarkNode[]): BookmarkNode | undefined => {
           for (const n of nodes) {
             if (n.id === e.detail.nodeId) return n;
@@ -42,14 +39,12 @@
           showModal = true;
         }
       } else if (e.detail.parentId) {
-        // Add Child
         editingId = null;
         parentId = e.detail.parentId;
         modalTitle = "";
         showModal = true;
       }
     };
-
     document.addEventListener("edit-bookmark", handleEdit);
     return () => document.removeEventListener("edit-bookmark", handleEdit);
   });
@@ -58,7 +53,6 @@
     if (editingId) {
       store.updateBookmark(editingId, { title: modalTitle });
     } else {
-      // Find parent node object if parentId exists
       let parentNode: BookmarkNode | null = null;
       if (parentId) {
         const findNode = (nodes: BookmarkNode[]): BookmarkNode | undefined => {
@@ -83,62 +77,83 @@
     onFilesSelected={(files) => store.loadFile(files[0])}
   />
 {:else}
-  <div class="flex flex-col h-full lg:flex-row gap-2 overflow-hidden">
-    <div class="w-full lg:w-96 flex flex-col border-r rounded-lg bg-card">
-      <div class="p-3 border-b flex items-center justify-between">
-        <div class="font-semibold flex items-center gap-2">
-          <FolderTree size={18} /> Bookmarks
+  <div
+    class="flex h-full flex-col gap-3 overflow-hidden lg:flex-row"
+  >
+    <aside
+      class="flex w-full flex-col overflow-hidden rounded-md border border-border/60 bg-card lg:w-96"
+    >
+      <header class="flex items-center justify-between gap-2 border-b border-border/60 px-3 py-2.5">
+        <div class="flex items-center gap-2">
+          <span
+            class="inline-flex size-7 items-center justify-center rounded-sm bg-primary/10 text-primary"
+          >
+            <FolderTree class="size-3.5" />
+          </span>
+          <span
+            class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-foreground"
+          >
+            Bookmarks
+          </span>
         </div>
-        <div class="flex gap-1">
+        <div class="flex items-center gap-1">
           <Button
             size="icon-sm"
-            variant="outline"
+            variant="ghost"
+            class="rounded-sm text-muted-foreground hover:text-foreground"
             onclick={() => store.undo()}
             disabled={store.state.historyIndex <= 0}
+            title="Undo"
           >
-            <Undo size={16} />
+            <Undo class="size-3.5" />
           </Button>
           <Button
             size="icon-sm"
-            variant="outline"
+            variant="ghost"
+            class="rounded-sm text-muted-foreground hover:text-foreground"
             onclick={() => store.redo()}
-            disabled={store.state.historyIndex >=
-              store.state.history.length - 1}
+            disabled={store.state.historyIndex >= store.state.history.length - 1}
+            title="Redo"
           >
-            <Redo size={16} />
+            <Redo class="size-3.5" />
           </Button>
         </div>
-      </div>
+      </header>
 
-      <div class="p-3 border-b bg-muted/10">
-        <div class="flex gap-2">
-          <Input
-            bind:value={modalTitle}
-            placeholder="New bookmark..."
-            class="flex-1"
-            onkeydown={(e) =>
-              e.key === "Enter" && store.addBookmark(null, modalTitle)}
-          />
-          <Button
-            variant="outline"
-            size="icon-sm"
-            onclick={() => store.addBookmark(null, modalTitle)}
-          >
-            <Plus size={16} />
-          </Button>
-        </div>
+      <div class="flex items-center gap-2 border-b border-border/60 bg-muted/10 px-3 py-2.5">
+        <Input
+          bind:value={modalTitle}
+          placeholder="New bookmark…"
+          class="h-9 flex-1 rounded-sm font-mono text-sm"
+          onkeydown={(e) =>
+            e.key === "Enter" && store.addBookmark(null, modalTitle)}
+        />
+        <Button
+          variant="outline"
+          size="icon-sm"
+          class="rounded-sm"
+          onclick={() => store.addBookmark(null, modalTitle)}
+        >
+          <Plus class="size-3.5" />
+        </Button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-2">
         {#if store.state.bookmarks.length === 0}
-          <div class="text-center text-muted-foreground text-sm mt-10">
-            No bookmarks yet. <br />
-            <Button
-              variant="default_soft"
-              class="mt-2"
-              size="sm"
-              onclick={() => store.extractExisting()}>Extract from PDF</Button
+          <div class="mt-10 flex flex-col items-center gap-3 text-center">
+            <p
+              class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70"
             >
+              No bookmarks yet
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              class="rounded-sm bg-primary/10 text-primary hover:bg-primary/15"
+              onclick={() => store.extractExisting()}
+            >
+              Extract from PDF
+            </Button>
           </div>
         {:else}
           {#each store.state.bookmarks as node (node.id)}
@@ -147,43 +162,52 @@
         {/if}
       </div>
 
-      <div class="p-4 border-t">
-        <Button variant="dark" onclick={() => store.save()}>
-          <Save size={18} /> Download PDF
+      <footer class="border-t border-border/60 p-3">
+        <Button
+          class="w-full rounded-sm bg-primary text-primary-foreground hover:bg-primary/90"
+          onclick={() => store.save()}
+        >
+          <Save class="size-4" />
+          Download PDF
         </Button>
-      </div>
-    </div>
+      </footer>
+    </aside>
 
-    <div class="flex-1 relative min-w-0">
+    <div class="relative min-w-0 flex-1 overflow-hidden rounded-md border border-border/60 bg-card">
       <Viewer {store} />
     </div>
   </div>
 {/if}
+
 <Dialog bind:open={showModal}>
   <DialogContent>
     <DialogHeader>
-      <DialogTitle>{editingId ? "Edit Bookmark" : "Add Child"}</DialogTitle>
+      <DialogTitle>{editingId ? "Edit bookmark" : "Add child"}</DialogTitle>
       <DialogDescription>
         {editingId
-          ? "Edit the title of the bookmark. Destination will remain unchanged."
+          ? "Edit the title. The destination remains unchanged."
           : "Add a new child bookmark under the selected parent."}
       </DialogDescription>
     </DialogHeader>
-    <input
+    <Input
       bind:value={modalTitle}
-      class="w-full border p-2 rounded mb-4"
+      class="mt-3 h-10 rounded-sm font-mono text-sm"
       placeholder="Title"
     />
-    <div class="flex justify-end gap-2">
-      <button
+    <div class="mt-4 flex justify-end gap-2">
+      <Button
+        variant="ghost"
+        class="rounded-sm"
         onclick={() => (showModal = false)}
-        class="px-4 py-2 hover:bg-muted rounded">Cancel</button
       >
-      <button
+        Cancel
+      </Button>
+      <Button
+        class="rounded-sm bg-primary text-primary-foreground hover:bg-primary/90"
         onclick={saveModal}
-        class="px-4 py-2 bg-primary text-primary-foreground rounded"
-        >Save</button
       >
+        Save
+      </Button>
     </div>
   </DialogContent>
 </Dialog>

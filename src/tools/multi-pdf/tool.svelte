@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Button from "$components/ui/button/button.svelte";
+  import { Button } from "$components/ui/button";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { cn } from "$lib/utils";
   import {
     CheckSquare,
     Download,
     FilePlus,
-    Loader2,
+    LoaderCircle,
     Redo2,
     RotateCcw,
     RotateCw,
@@ -17,7 +17,7 @@
   } from "@lucide/svelte";
   import Sortable from "sortablejs";
   import { setContext } from "svelte";
-  import { slide } from "svelte/transition";
+  import { fade, slide } from "svelte/transition";
   import { PDF_STATE_KEY, PdfEditorState } from "./helper.svelte";
   import PdfPage from "./PdfPage.svelte";
 
@@ -31,7 +31,6 @@
       onEnd: (evt) => {
         if (evt.oldIndex !== undefined && evt.newIndex !== undefined) {
           const pages = [...pdfState.pages];
-          // GUARD: Ensure we have a valid item to move
           if (pages[evt.oldIndex]) {
             const [moved] = pages.splice(evt.oldIndex, 1);
             pages.splice(evt.newIndex, 0, moved);
@@ -40,13 +39,13 @@
         }
       },
     });
-
-    return {
-      destroy: () => sortableInstance.destroy(),
-    };
+    return { destroy: () => sortableInstance.destroy() };
   }
 
   let uploadArea: ReturnType<typeof UploadArea>;
+
+  const toolbarBtn =
+    "inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors text-muted-foreground hover:bg-muted/60 hover:text-foreground";
 </script>
 
 <UploadArea
@@ -56,139 +55,177 @@
 />
 
 {#if pdfState.pages.length > 0}
-  <div
-    use:sortable
-    class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 3xl:grid-cols-6"
-  >
-    {#each pdfState.pages as page, i (page?.id || i)}
-      {#if page}
-        <PdfPage {page} index={i} />
-      {/if}
-    {/each}
+  <div class="flex flex-col gap-4 pb-32">
+    <div
+      class="sticky top-0 z-20 flex items-baseline justify-between gap-3 border-b border-border/60 bg-card/70 py-2 backdrop-blur-2xl backdrop-saturate-150 supports-backdrop-filter:bg-card/55"
+    >
+      <span
+        class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-primary"
+      >
+        Pages
+      </span>
+      <span class="font-mono text-[11px] tabular-nums text-muted-foreground/60">
+        {String(pdfState.selectedIds.size).padStart(2, "0")} / {String(pdfState.pages.length).padStart(2, "0")}
+      </span>
+    </div>
+
+    <div
+      use:sortable
+      class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 3xl:grid-cols-6"
+    >
+      {#each pdfState.pages as page, i (page?.id || i)}
+        {#if page}
+          <PdfPage {page} index={i} />
+        {/if}
+      {/each}
+    </div>
   </div>
 {/if}
 
 <div
   class={cn(
-    "fixed bottom-4 inset-x-0 top-auto z-40 mx-auto w-full max-w-6xl px-2 sm:bottom-8 sm:px-4",
-    pdfState.pages.length === 0 && "hidden",
+    "fixed inset-x-0 bottom-4 z-40 mx-auto w-full max-w-5xl px-3 sm:bottom-6 sm:px-4",
+    pdfState.pages.length === 0 && "hidden"
   )}
-  transition:slide={{ duration: 500, delay: 200 }}
+  transition:slide={{ duration: 320, delay: 120 }}
+  style="padding-bottom: max(env(safe-area-inset-bottom), 0px);"
 >
   <div
-    class="flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl border border-border/50 bg-card/80 p-2 shadow-2xl backdrop-blur-xl ring-1 ring-black/5 lg:flex-nowrap lg:justify-between"
+    class="flex w-full flex-wrap items-center justify-between gap-1.5 rounded-md border border-border/60 bg-card/70 px-2 py-1.5 shadow-[0_10px_40px_-12px_rgba(0,0,0,0.18)] backdrop-blur-2xl backdrop-saturate-150 supports-backdrop-filter:bg-card/55 lg:flex-nowrap"
   >
-    <div class="flex items-center gap-1 lg:border-r lg:border-border/40 lg:pr-2">
-      <Button
-        variant="outline"
-        class="toolbar-btn-primary"
+    <div class="flex items-center gap-1 lg:border-r lg:border-border/60 lg:pr-1.5">
+      <button
+        type="button"
+        class={toolbarBtn}
         onclick={() => uploadArea.click()}
         title="Add PDF"
       >
-        <UploadCloud size={18} />
-        <span class="hidden sm:inline">Add PDF</span>
-      </Button>
-      <Button
-        variant="secondary"
-        class="toolbar-btn"
+        <UploadCloud class="size-3.5" />
+        <span class="hidden sm:inline">Add</span>
+      </button>
+      <button
+        type="button"
+        class={toolbarBtn}
         onclick={() => pdfState.addBlankPage()}
-        title="Add Blank"
+        title="Add blank page"
       >
-        <FilePlus size={18} />
-        <span class="hidden md:inline">Add Blank</span>
-      </Button>
+        <FilePlus class="size-3.5" />
+        <span class="hidden md:inline">Blank</span>
+      </button>
     </div>
 
-    <div class="flex items-center gap-1 lg:border-r lg:border-border/40 lg:pr-2">
-      <Button
-        variant="secondary"
-        class="toolbar-btn"
+    <div class="flex items-center gap-1 lg:border-r lg:border-border/60 lg:pr-1.5">
+      <button
+        type="button"
+        class={toolbarBtn}
         onclick={() => pdfState.undo()}
         title="Undo"
       >
-        <Undo2 size={18} />
+        <Undo2 class="size-3.5" />
         <span class="hidden xl:inline">Undo</span>
-      </Button>
-      <Button
-        variant="secondary"
-        class="toolbar-btn"
+      </button>
+      <button
+        type="button"
+        class={toolbarBtn}
         onclick={() => pdfState.redo()}
         title="Redo"
       >
-        <Redo2 size={18} />
+        <Redo2 class="size-3.5" />
         <span class="hidden xl:inline">Redo</span>
-      </Button>
+      </button>
     </div>
 
-    <div class="flex items-center gap-1 lg:border-r lg:border-border/40 lg:pr-2">
-      <Button
-        variant="secondary"
-        class="toolbar-btn"
+    <div class="flex items-center gap-1 lg:border-r lg:border-border/60 lg:pr-1.5">
+      <button
+        type="button"
+        class={toolbarBtn}
         onclick={() => pdfState.bulkRotate(-90)}
-        title="Rotate Left"
+        title="Rotate left"
       >
-        <RotateCcw size={18} />
+        <RotateCcw class="size-3.5" />
         <span class="hidden xl:inline">Left</span>
-      </Button>
-      <Button
-        variant="secondary"
-        class="toolbar-btn"
+      </button>
+      <button
+        type="button"
+        class={toolbarBtn}
         onclick={() => pdfState.bulkRotate(90)}
-        title="Rotate Right"
+        title="Rotate right"
       >
-        <RotateCw size={18} />
+        <RotateCw class="size-3.5" />
         <span class="hidden xl:inline">Right</span>
-      </Button>
+      </button>
     </div>
 
-    <div class="flex items-center gap-1 lg:border-r lg:border-border/40 lg:pr-2">
-      <Button
-        variant={pdfState.selectedIds.size === pdfState.pages.length ? "default_soft" : "secondary"}
-        class="toolbar-btn"
+    <div class="flex items-center gap-1 lg:border-r lg:border-border/60 lg:pr-1.5">
+      <button
+        type="button"
+        class={cn(
+          toolbarBtn,
+          pdfState.selectedIds.size === pdfState.pages.length &&
+            "bg-primary/10 text-primary"
+        )}
         onclick={() => pdfState.selectAll()}
-        title="Select All"
+        title="Select all"
       >
-        <CheckSquare size={18} />
-        <span class="hidden xl:inline">Select All</span>
-      </Button>
-      <Button
-        variant="secondary"
-        class="toolbar-btn"
+        <CheckSquare class="size-3.5" />
+        <span class="hidden xl:inline">All</span>
+      </button>
+      <button
+        type="button"
+        class={toolbarBtn}
         onclick={() => pdfState.deselectAll()}
         title="Deselect"
       >
-        <Square size={18} />
-        <span class="hidden xl:inline">Deselect</span>
-      </Button>
+        <Square class="size-3.5" />
+        <span class="hidden xl:inline">None</span>
+      </button>
     </div>
 
-    <div class="flex items-center gap-1">
-      <Button
-        variant="destructive_soft"
-        class="toolbar-btn"
+    <div class="flex items-center gap-1.5">
+      <button
+        type="button"
+        class={cn(
+          toolbarBtn,
+          "hover:bg-destructive/10 hover:text-destructive"
+        )}
         onclick={() => pdfState.bulkDelete()}
-        title="Delete Selected"
+        title="Delete selected"
       >
-        <Trash2 size={18} />
+        <Trash2 class="size-3.5" />
         <span class="hidden md:inline">Delete</span>
-      </Button>
-      <Button variant="dark" onclick={() => pdfState.download()}>
-        <Download size={16} />
-        <span>Export</span>
+      </button>
+      <Button
+        size="sm"
+        class="rounded-sm bg-primary text-primary-foreground hover:bg-primary/90"
+        onclick={() => pdfState.download()}
+      >
+        <Download class="size-3.5" />
+        Export
       </Button>
     </div>
   </div>
 </div>
 
 {#if pdfState.loader.show}
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-    <div class="flex flex-col items-center rounded-2xl bg-card p-8 shadow-2xl ring-1 ring-border/50">
-      <Loader2 class="mb-4 size-10 animate-spin text-primary" />
-      <h3 class="mb-2 text-lg font-semibold text-foreground">
-        Processing Documents
-      </h3>
-      <p class="mb-6 text-sm text-muted-foreground">{pdfState.loader.text}</p>
-      <div class="h-2 w-64 overflow-hidden rounded-full bg-muted">
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md"
+    transition:fade={{ duration: 160 }}
+  >
+    <div
+      class="flex w-full max-w-sm flex-col items-center gap-4 rounded-md border border-border/60 bg-card p-6 shadow-2xl"
+    >
+      <span
+        class="inline-flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary"
+      >
+        <LoaderCircle class="size-4 animate-spin" />
+      </span>
+      <p
+        class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+      >
+        Processing
+      </p>
+      <p class="text-sm text-foreground">{pdfState.loader.text}</p>
+      <div class="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
         <div
           class="h-full bg-primary transition-all duration-300"
           style="width: {pdfState.loader.progress}%"

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import { Checkbox } from "$components/ui/checkbox";
   import { Label } from "$components/ui/label";
@@ -7,9 +8,7 @@
     ArrowRight,
     ChevronLeft,
     ChevronRight,
-    Crop,
-    Loader2,
-    Trash2,
+    LoaderCircle,
   } from "@lucide/svelte";
   import CropperCanvas from "./CropperCanvas.svelte";
   import { CropPdfState } from "./helper.svelte";
@@ -24,90 +23,86 @@
     onFilesSelected={(files) => store.loadFile(files[0])}
   />
 {:else}
-  <div class="border-b border-border sticky top-0 z-20">
-    <div
-      class="mx-auto max-w-4xl flex flex-wrap items-center justify-between gap-4"
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label={store.state.file.name}
+      count={store.state.pageCount}
+      onReset={() => store.reset()}
+      resetLabel="Clear"
     >
-      <div class="flex items-center gap-3">
-        <div
-          class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600"
-        >
-          <Crop size={18} />
+      {#snippet actions()}
+        <div class="flex items-center gap-1 rounded-sm border border-border/60 bg-card px-1 py-0.5">
+          <button
+            type="button"
+            disabled={store.state.currentPage <= 1}
+            onclick={() => store.setPage(store.state.currentPage - 1)}
+            class="inline-flex size-7 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:opacity-40"
+            aria-label="Previous page"
+          >
+            <ChevronLeft class="size-3.5" />
+          </button>
+          <span
+            class="w-16 text-center font-mono text-[11px] tabular-nums text-foreground"
+          >
+            {String(store.state.currentPage).padStart(2, "0")} / {String(store.state.pageCount).padStart(2, "0")}
+          </span>
+          <button
+            type="button"
+            disabled={store.state.currentPage >= store.state.pageCount}
+            onclick={() => store.setPage(store.state.currentPage + 1)}
+            class="inline-flex size-7 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:opacity-40"
+            aria-label="Next page"
+          >
+            <ChevronRight class="size-3.5" />
+          </button>
         </div>
-        <div class="hidden sm:block">
-          <h3 class="text-sm font-medium">{store.state.file.name}</h3>
-          <p class="text-[10px] text-muted-foreground">
-            {store.state.pageCount} Pages
-          </p>
-        </div>
-      </div>
+      {/snippet}
+    </ToolBar>
 
-      <div class="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
-        <button
-          disabled={store.state.currentPage <= 1}
-          onclick={() => store.setPage(store.state.currentPage - 1)}
-          class="p-1 rounded-md hover:bg-background disabled:opacity-50"
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <span class="text-xs font-mono w-16 text-center">
-          {store.state.currentPage} / {store.state.pageCount}
-        </span>
-        <button
-          disabled={store.state.currentPage >= store.state.pageCount}
-          onclick={() => store.setPage(store.state.currentPage + 1)}
-          class="p-1 rounded-md hover:bg-background disabled:opacity-50"
-        >
-          <ChevronRight size={16} />
-        </button>
-      </div>
-
-      <Button
-        onclick={() => store.reset()}
-        variant="destructive_soft"
-        size="icon-sm"
-      >
-        <Trash2 size={18} />
-      </Button>
-    </div>
-  </div>
-
-  <div class="flex-1 overflow-y-auto bg-muted/10 py-4 sm:p-6">
-    <div class="mx-auto max-w-4xl space-y-6">
-      <div class="flex flex-wrap items-center gap-4 text-sm">
-        <Label class="flex items-center gap-2 cursor-pointer">
+    <ToolPanel title="Options">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <Label class="flex cursor-pointer items-center gap-2 text-sm">
           <Checkbox bind:checked={store.state.applyToAll} />
-          <span>Apply crop to all pages</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.16em] text-foreground">
+            Apply to all pages
+          </span>
         </Label>
 
-        <div class="h-4 w-px bg-border"></div>
+        <span class="hidden h-3.5 w-px bg-border sm:block"></span>
 
         <Label
-          class="flex items-center gap-2 cursor-pointer"
+          class="flex cursor-pointer items-center gap-2 text-sm"
           title="Converts pages to images. Fixes stubborn PDFs but removes text selection."
         >
           <Checkbox bind:checked={store.state.isDestructive} />
-          <span>Flatten (Destructive)</span>
+          <span class="font-mono text-[11px] uppercase tracking-[0.16em] text-foreground">
+            Flatten · destructive
+          </span>
         </Label>
       </div>
+    </ToolPanel>
 
-      <CropperCanvas {store} />
-    </div>
-  </div>
+    <ToolPanel title="Canvas">
+      <div class="rounded-sm border border-border/60 bg-muted/20 p-3 sm:p-4">
+        <CropperCanvas {store} />
+      </div>
+    </ToolPanel>
 
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      onclick={() => store.crop()}
-      disabled={store.isProcessing}
-      variant="dark"
-      size="lg"
-      class="inline-flex h-11 min-w-50 px-8 text-lg"
-    >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin" /> {store.progress}
-      {:else}
-        Crop PDF <ArrowRight size={18} />
-      {/if}
-    </Button>
+    <ToolFooter hint={store.isProcessing ? store.progress : "Crop document"}>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.crop()}
+        disabled={store.isProcessing}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress}
+        {:else}
+          Crop PDF
+          <ArrowRight class="size-4" />
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}

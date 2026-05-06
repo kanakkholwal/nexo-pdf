@@ -1,15 +1,9 @@
 <script lang="ts">
+  import { FileRow, ToolBar, ToolFooter, ToolPanel } from "$components/tool";
   import { Button } from "$components/ui/button";
   import UploadArea from "$components/ui/UploadArea.svelte";
   import { formatBytes } from "$utils/helper";
-  import {
-    FileImage,
-    FileText,
-    FileUp,
-    Loader2,
-    Plus,
-    Trash2,
-  } from "@lucide/svelte";
+  import { FileUp, Info, LoaderCircle, Plus } from "@lucide/svelte";
   import { PdfToWordState } from "./helper.svelte";
 
   const store = new PdfToWordState();
@@ -23,82 +17,80 @@
   onFilesSelected={(files) => store.addFiles(files)}
   class={store.files.length > 0 ? "hidden" : ""}
 />
+
 {#if store.files.length > 0}
-  <div
-    class="sticky top-0 z-20 border-b border-border bg-accent/50 p-4 rounded-lg"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h2 class="text-sm font-semibold flex items-center gap-2">
-        <FileText size={18} class="text-primary" />
-        {store.files.length} File{store.files.length > 1 ? "s" : ""} Selected
-      </h2>
-      <div class="flex items-center gap-2">
-        <Button variant="ghost" onclick={() => uploadArea.click()}>
-          <Plus size={16} /> Add More
+  <div class="flex flex-col gap-8">
+    <ToolBar
+      label="Documents"
+      count={store.files.length}
+      onReset={() => store.reset()}
+      resetLabel="Clear all"
+    >
+      {#snippet actions()}
+        <Button
+          variant="outline"
+          size="sm"
+          onclick={() => uploadArea.click()}
+          class="rounded-sm"
+        >
+          <Plus class="size-3.5" />
+          <span class="hidden sm:inline">Add</span>
         </Button>
-        <Button variant="ghost" onclick={() => store.reset()}>
-          <Trash2 size={16} /> Clear All
-        </Button>
-      </div>
-    </div>
-  </div>
+      {/snippet}
+    </ToolBar>
 
-  <div class="flex-1 overflow-y-auto p-6 space-y-8">
-    <div class="max-w-3xl mx-auto space-y-6">
-      <div class="grid gap-3">
+    <ToolPanel title="Files" counter={store.files.length}>
+      <ul class="flex flex-col gap-2">
         {#each store.files as file (file.id)}
-          <div
-            class="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-xs transition-colors hover:border-primary/30"
-          >
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-              <div class="bg-red-500/10 text-red-500 p-2 rounded-md shrink-0">
-                <FileImage size={20} />
-              </div>
-              <div class="min-w-0">
-                <div class="truncate font-medium text-sm">{file.file.name}</div>
-                <div class="text-xs text-muted-foreground">
-                  {formatBytes(file.originalSize)}
-                </div>
-              </div>
-            </div>
-
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              class="text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 ml-2"
-              onclick={() => store.removeFile(file.id)}
+          <li>
+            <FileRow
+              name={file.file.name}
+              onRemove={() => store.removeFile(file.id)}
             >
-              <Trash2 size={18} />
-            </Button>
-          </div>
+              <span class="font-mono tabular-nums">
+                {formatBytes(file.originalSize)}
+              </span>
+            </FileRow>
+          </li>
         {/each}
-      </div>
+      </ul>
+    </ToolPanel>
 
+    <ToolPanel title="Note">
       <div
-        class="rounded-lg bg-blue-500/10 p-4 text-xs text-blue-600 dark:text-blue-400"
+        class="flex items-start gap-3 rounded-sm border border-border/60 bg-muted/20 px-4 py-3"
       >
-        <p>
-          <strong>Note:</strong> Converting complex layouts might take a few moments.
-          If multiple files are uploaded, they will be combined into a single ZIP
-          archive.
+        <span
+          class="inline-flex size-7 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary"
+        >
+          <Info class="size-3.5" />
+        </span>
+        <p class="text-xs leading-relaxed text-muted-foreground">
+          Complex layouts may take a moment. Multiple files are bundled into a
+          single ZIP archive.
         </p>
       </div>
-    </div>
-  </div>
+    </ToolPanel>
 
-  <div class="border-t border-border p-4 text-center">
-    <Button
-      size="lg"
-      variant="dark"
-      class="px-8 h-11 min-w-50"
-      onclick={() => store.process()}
-      disabled={store.isProcessing || store.files.length === 0}
+    <ToolFooter
+      hint={store.isProcessing
+        ? store.progress.text
+        : `Convert ${store.files.length} file${store.files.length === 1 ? "" : "s"} to DOCX`}
     >
-      {#if store.isProcessing}
-        <Loader2 class="animate-spin mr-2" size={18} /> {store.progress.text}
-      {:else}
-        Convert to Word (DOCX) <FileUp size={18} class="ml-2" />
-      {/if}
-    </Button>
+      <Button
+        size="lg"
+        class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90"
+        onclick={() => store.process()}
+        disabled={store.isProcessing || store.files.length === 0}
+      >
+        {#if store.isProcessing}
+          <LoaderCircle class="size-4 animate-spin" />
+          {store.progress.text}
+        {:else}
+          <FileUp class="size-4" />
+          Convert to Word
+        {/if}
+      </Button>
+    </ToolFooter>
   </div>
 {/if}
