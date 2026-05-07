@@ -92,9 +92,6 @@ jobs:
       - name: Clean Rust build
         run: cd src-tauri && cargo clean
 
-      - name: Install msixbundle-cli
-        run: cargo install msixbundle-cli
-
       - name: Build and attach (Windows)
         uses: tauri-apps/tauri-action@v0
         env:
@@ -107,49 +104,105 @@ jobs:
           releaseDraft: false
           prerelease: false
 
-      # Cross-arch (arm64) requires adding `aarch64-pc-windows-msvc` to the
-      # tauri-action above; for now we ship x64 only.
-      #
-      # msixbundle-cli expects unpacked AppxContent directories per arch, not
-      # the single .msix that tauri produces. So we locate the tauri-built
-      # .msix, unpack it with makeappx (from the Windows 10 SDK), then bundle.
-      - name: Build MSIX bundle
+      # Tauri v2 has no MSIX target, so we package it ourselves using
+      # makeappx.exe + signtool.exe from the Windows 10 SDK (already on the
+      # runner — no third-party tool needed). Signing is optional: set the
+      # WINDOWS_PFX_BASE64 / WINDOWS_PFX_PASSWORD secrets to produce a
+      # signed bundle, otherwise an unsigned .msixbundle is produced.
+      - name: Stage and pack MSIX bundle
         shell: pwsh
+        env:
+          TAG: ${{ needs.prepare-release.outputs.tag }}
+          WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
+          WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
         run: |
-          $msix = Get-ChildItem -Path src-tauri/target/release/bundle/msix -Filter *.msix -Recurse | Select-Object -First 1
-          if (-not $msix) { Write-Error "No .msix produced by tauri-action"; exit 1 }
-          Write-Host "Found MSIX: $($msix.FullName)"
+          $ErrorActionPreference = 'Stop'
 
-          $makeappx = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Filter makeappx.exe -Recurse |
-            Where-Object { $_.FullName -match '\\x64\\makeappx.exe$' } |
-            Sort-Object FullName -Descending | Select-Object -First 1
-          if (-not $makeappx) { Write-Error "makeappx.exe not found in Windows 10 SDK"; exit 1 }
-          Write-Host "Using makeappx: $($makeappx.FullName)"
+          # Locate makeappx + signtool from the latest installed Windows 10 SDK
+          $sdkBin = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Directory |
+            Where-Object { $_.Name -match '^10\.' } |
+            Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $sdkBin) { Write-Error "Windows 10 SDK not found"; exit 1 }
+          $makeappx = Join-Path $sdkBin.FullName "x64\makeappx.exe"
+          $signtool = Join-Path $sdkBin.FullName "x64\signtool.exe"
+          if (-not (Test-Path $makeappx)) { Write-Error "makeappx.exe missing at $makeappx"; exit 1 }
+          Write-Host "makeappx: $makeappx"
 
-          $unpackDir = "src-tauri/target/msix-unpack/x64"
-          New-Item -ItemType Directory -Force -Path $unpackDir | Out-Null
-          & $makeappx.FullName unpack /p $msix.FullName /d $unpackDir /o
-          if ($LASTEXITCODE -ne 0) { Write-Error "makeappx unpack failed"; exit $LASTEXITCODE }
+          # Tag like "v0.1.0" -> AppX 4-part version "0.1.0.0"
+          $raw = $env:TAG -replace '^v',''
+          $parts = $raw.Split('.')
+          while ($parts.Count -lt 4) { $parts += '0' }
+          $appxVersion = ($parts[0..3] -join '.')
+          Write-Host "AppX version: $appxVersion"
+
+          $exe = Get-ChildItem -Path src-tauri/target/release -Filter orbit.exe -File | Select-Object -First 1
+          if (-not $exe) { Write-Error "orbit.exe not found in src-tauri/target/release"; exit 1 }
+
+          $stage = "src-tauri/target/msix-stage/x64"
+          if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
+          New-Item -ItemType Directory -Force -Path "$stage/Assets" | Out-Null
+
+          Copy-Item $exe.FullName "$stage/orbit.exe"
+          $iconSrc = "src-tauri/icons"
+          foreach ($asset in @(
+            'StoreLogo.png',
+            'Square44x44Logo.png',
+            'Square71x71Logo.png',
+            'Square150x150Logo.png',
+            'Square310x310Logo.png'
+          )) {
+            Copy-Item "$iconSrc/$asset" "$stage/Assets/$asset"
+          }
+
+          $manifest = Get-Content -Raw -Path src-tauri/msix/AppxManifest.xml.tmpl
+          $manifest = $manifest.Replace('__VERSION__', $appxVersion)
+          Set-Content -Path "$stage/AppxManifest.xml" -Value $manifest -Encoding UTF8
 
           $outDir = "src-tauri/target/msix"
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          msixbundle-cli --out-dir $outDir --dir-x64 $unpackDir
-          if ($LASTEXITCODE -ne 0) { Write-Error "msixbundle-cli failed"; exit $LASTEXITCODE }
+          $msixPath   = Join-Path $outDir "OrbitPDF-$raw-x64.msix"
+          $bundlePath = Join-Path $outDir "OrbitPDF-$raw.msixbundle"
 
-      - name: Attach MSIX to release
+          # Pack the staged content into a per-arch .msix
+          & $makeappx pack /d $stage /p $msixPath /o
+          if ($LASTEXITCODE -ne 0) { Write-Error "makeappx pack failed"; exit $LASTEXITCODE }
+
+          # Bundle the per-arch packages into a .msixbundle
+          $bundleStage = "src-tauri/target/msix-bundle-stage"
+          if (Test-Path $bundleStage) { Remove-Item -Recurse -Force $bundleStage }
+          New-Item -ItemType Directory -Force -Path $bundleStage | Out-Null
+          Copy-Item $msixPath $bundleStage
+          & $makeappx bundle /d $bundleStage /p $bundlePath /bv $appxVersion /o
+          if ($LASTEXITCODE -ne 0) { Write-Error "makeappx bundle failed"; exit $LASTEXITCODE }
+
+          # Optional signing — both .msix and .msixbundle if a PFX is provided
+          if ($env:WINDOWS_PFX_BASE64 -and $env:WINDOWS_PFX_PASSWORD) {
+            $pfxDir = "src-tauri/target/msix-stage"
+            New-Item -ItemType Directory -Force -Path $pfxDir | Out-Null
+            $pfxPath = Join-Path (Resolve-Path $pfxDir).Path "signing.pfx"
+            [System.IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_PFX_BASE64))
+            foreach ($p in @($msixPath, $bundlePath)) {
+              & $signtool sign /fd SHA256 /a /f $pfxPath /p $env:WINDOWS_PFX_PASSWORD $p
+              if ($LASTEXITCODE -ne 0) { Write-Error "signtool failed on $p"; exit $LASTEXITCODE }
+            }
+            Write-Host "Signed .msix and .msixbundle"
+          } else {
+            Write-Host "WINDOWS_PFX_BASE64 not set — producing unsigned outputs"
+          }
+
+          Get-ChildItem -Path $outDir | Format-Table -AutoSize
+
+      - name: Attach MSIX bundle to release
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.prepare-release.outputs.tag }}
         run: |
           $bundles = Get-ChildItem -Path src-tauri/target/msix -Filter *.msixbundle -Recurse
-          if (-not $bundles) {
-            Write-Error "No .msixbundle artifacts found"
-            exit 1
-          }
+          if (-not $bundles) { Write-Error "No .msixbundle artifacts found"; exit 1 }
           foreach ($b in $bundles) {
             gh release upload $env:TAG "$($b.FullName)" --clobber
           }
-        shell: pwsh
 
       - name: Upload MSIX as workflow artifact
         uses: actions/upload-artifact@v4

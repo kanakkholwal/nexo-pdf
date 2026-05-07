@@ -85,66 +85,108 @@
   class="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 px-1 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-2 sm:px-2 sm:pt-4"
 >
   <header
-    class="flex flex-col gap-5 border-b border-border/60 pb-8"
+    class="relative flex flex-col items-center gap-7 overflow-hidden border-b border-border/60 px-2 pb-10 pt-6 text-center sm:pt-10"
     in:fly={{ y: 10, duration: 480, easing: cubicOut }}
   >
-    <div class="flex flex-wrap items-center gap-3">
-      <span
-        class="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-primary"
-      >
-        Library
+
+    <div
+      class="inline-flex items-center gap-2 rounded-full border border-border/60 bg-primary/5 px-3 py-1 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-primary"
+    >
+      <span class="relative inline-flex size-1.5">
+        <span
+          class="absolute inset-0 animate-ping rounded-full bg-primary/60"
+        ></span>
+        <span class="relative inline-flex size-1.5 rounded-full bg-primary"></span>
       </span>
-      <span class="text-muted-foreground/40">·</span>
-      <span
-        class="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-      >
-        {String(toolList.length).padStart(2, "0")} tools · all offline
+      Library
+      <span class="opacity-40">·</span>
+      <span class="tabular-nums">
+        {String(toolList.length).padStart(2, "0")} tools
       </span>
+      <span class="opacity-40">·</span>
+      All offline
     </div>
 
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-      <div class="flex flex-col gap-3">
-        <h1
-          class="text-3xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl"
-        >
-          Everything you need
-          <span class="text-primary">to master PDFs.</span>
-        </h1>
-        <p class="max-w-xl text-sm leading-relaxed text-muted-foreground">
-          Browser-based, signed, and shippable. Pick a tool — your files never
-          leave the device.
-        </p>
-      </div>
+    <div class="flex max-w-2xl flex-col items-center gap-3">
+      <h1
+        class="text-3xl font-semibold leading-[1.05] tracking-tight text-foreground sm:text-4xl md:text-5xl"
+      >
+        Find the right tool
+        <span class="text-primary">in two keystrokes.</span>
+      </h1>
+      <p class="max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-[15px]">
+        Search the full library. Filter by category. Open instantly — your
+        files never leave the device.
+      </p>
+    </div>
 
-      <div class="relative w-full lg:w-80">
-        <Search
-          class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-        />
+    <div class="relative w-full max-w-xl">
+      <div
+        class="pointer-events-none absolute -inset-px rounded-md bg-linear-to-b from-primary/20 to-transparent opacity-60"
+        aria-hidden="true"
+      ></div>
+      <div class="relative flex items-center gap-2 rounded-md border border-border/60 bg-card/80 px-3 shadow-sm ring-1 ring-white/5 backdrop-blur-sm focus-within:border-primary/40 focus-within:ring-primary/20">
+        <Search class="size-4 shrink-0 text-muted-foreground" />
         <Input
-          type="search"
           name="explore-search"
           value={searchQuery}
           oninput={(e) => handleSearch(e.currentTarget.value)}
-          placeholder="Search tools…"
-          class="h-11 rounded-sm pl-9 pr-12 font-mono text-sm placeholder:font-mono placeholder:text-muted-foreground/60"
+          placeholder="Search merge, split, compress, sign…"
+          class="h-12 flex-1 border-0 bg-transparent! px-0 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
         />
         {#if searchQuery}
           <button
             type="button"
             onclick={() => handleSearch("")}
-            class="absolute right-2 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+            class="inline-flex size-7 shrink-0 items-center justify-center rounded-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
             aria-label="Clear search"
           >
             <X class="size-3.5" />
           </button>
         {:else}
           <kbd
-            class="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded-xs border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70 lg:inline-block"
+            class="pointer-events-none hidden shrink-0 rounded-xs border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70 sm:inline-block"
           >
             /
           </kbd>
         {/if}
       </div>
+
+      {#if normalizedQuery}
+        <div
+          class="mt-3 flex items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+        >
+          <span class="tabular-nums text-primary">
+            {String(totalMatches).padStart(2, "0")}
+          </span>
+          {totalMatches === 1 ? "match" : "matches"}
+          <span class="opacity-40">·</span>
+          <button
+            type="button"
+            onclick={() => handleSearch("")}
+            class="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Clear
+          </button>
+        </div>
+      {:else}
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-1.5">
+          <span
+            class="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60"
+          >
+            Try
+          </span>
+          {#each ["merge", "compress", "sign", "ocr", "watermark"] as suggestion (suggestion)}
+            <button
+              type="button"
+              onclick={() => handleSearch(suggestion)}
+              class="inline-flex items-center rounded-full border border-border/60 bg-card/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+            >
+              {suggestion}
+            </button>
+          {/each}
+        </div>
+      {/if}
     </div>
   </header>
 

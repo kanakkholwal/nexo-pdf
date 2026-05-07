@@ -10,42 +10,45 @@
 </head>
 
 <body data-sveltekit-preload-data="hover">
-	<div id="boot">
+	<div id="boot" aria-hidden="true">
 		<div class="boot-wrap">
-			<div style="position:relative">
-				<img src="/assets/meta/logo.svg" height="72" class="boot-logo" />
+			<div class="boot-eyebrow">
+				<span class="boot-dot"></span>
+				<span>Booting</span>
+				<span class="boot-sep">·</span>
+				<span>Orbit PDF</span>
 			</div>
 
-			<div style="display:flex;flex-direction:column;align-items:center;gap:12px">
-				<div class="loader"></div>
-				<div class="boot-text">The professional PDF toolkit</div>
+			<img src="/assets/meta/logo.svg" alt="" class="boot-logo" />
+
+			<div class="boot-stack">
+				<div class="boot-loader" role="progressbar" aria-label="Loading"></div>
+				<div class="boot-text">Privacy-first PDF toolkit</div>
 			</div>
 		</div>
 		<style>
 			:root {
 				color-scheme: light dark;
 				--boot-logo-filter: none;
-				/* light defaults */
-				--boot-bg: linear-gradient(hsl(40 30% 96%), hsl(40 30% 96%));
+				--boot-bg: hsl(40 30% 96%);
 				--boot-fg: hsl(222 47% 11%);
 				--boot-muted: hsl(215 16% 47%);
-				--boot-track: hsl(220 14% 90%);
+				--boot-border: hsl(220 14% 88%);
+				--boot-track: hsl(220 14% 92%);
 				--boot-primary: hsl(175, 84%, 32%);
+				--boot-primary-soft: hsl(175 84% 32% / 0.10);
 			}
 
-
-
-			/* if your app uses .dark on <html> this wins over media query */
 			html.dark {
-				--boot-bg: linear-gradient(#393737, #1b1b1b);
+				--boot-bg: #1b1b1b;
 				--boot-fg: hsl(210 40% 98%);
 				--boot-muted: hsl(215 20% 65%);
-				--boot-track: hsl(217 33% 17%);
+				--boot-border: hsl(217 20% 22%);
+				--boot-track: hsl(217 25% 16%);
 				--boot-logo-filter: invert(1) hue-rotate(180deg);
 			}
 
-			html,
-			body {
+			html, body {
 				margin: 0;
 				height: 100%;
 				background: var(--boot-bg);
@@ -56,32 +59,77 @@
 				font-family: "Google Sans", "Inter", system-ui, sans-serif;
 			}
 
+			#boot {
+				position: fixed;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: var(--boot-bg);
+				z-index: 9999;
+			}
+
 			.boot-wrap {
 				display: flex;
 				flex-direction: column;
 				align-items: center;
-				gap: 48px;
+				gap: 32px;
+				padding: 24px;
 			}
 
-			/* logo adapts automatically */
+			.boot-eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				padding: 6px 12px;
+				border: 1px solid var(--boot-border);
+				border-radius: 999px;
+				background: var(--boot-primary-soft);
+				color: var(--boot-primary);
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 10px;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				font-weight: 500;
+			}
+
+			.boot-dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 999px;
+				background: var(--boot-primary);
+				box-shadow: 0 0 0 0 var(--boot-primary);
+				animation: bootPulse 1.6s ease-out infinite;
+			}
+
+			.boot-sep {
+				opacity: 0.5;
+			}
+
 			.boot-logo {
-				height: 72px;
-				color: var(--boot-fg);
+				height: 56px;
 				filter: var(--boot-logo-filter);
+				opacity: 0;
+				animation: bootFade 600ms ease-out 80ms forwards;
 			}
 
-			/* loader track */
-			.loader {
+			.boot-stack {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 14px;
+			}
+
+			.boot-loader {
 				position: relative;
 				height: 2px;
-				width: 192px;
+				width: 200px;
 				overflow: hidden;
 				border-radius: 999px;
 				background: var(--boot-track);
 			}
 
-			/* animated gradient */
-			.loader::before {
+			.boot-loader::before {
 				content: "";
 				position: absolute;
 				inset: 0;
@@ -89,18 +137,7 @@
 						transparent,
 						var(--boot-primary),
 						transparent);
-				animation: slide 1.2s ease-in-out infinite;
-				opacity: 0.9;
-			}
-
-			@keyframes slide {
-				from {
-					transform: translateX(-100%);
-				}
-
-				to {
-					transform: translateX(100%);
-				}
+				animation: bootSlide 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 			}
 
 			.boot-text {
@@ -109,19 +146,31 @@
 				text-transform: uppercase;
 				color: var(--boot-muted);
 				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-				animation: pulseText 2s ease-in-out infinite;
 			}
 
-			@keyframes pulseText {
+			@keyframes bootSlide {
+				from { transform: translateX(-100%); }
+				to { transform: translateX(100%); }
+			}
 
-				0%,
-				100% {
-					opacity: 0.45;
-				}
+			@keyframes bootPulse {
+				0%   { box-shadow: 0 0 0 0 hsl(175 84% 32% / 0.6); }
+				70%  { box-shadow: 0 0 0 6px hsl(175 84% 32% / 0); }
+				100% { box-shadow: 0 0 0 0 hsl(175 84% 32% / 0); }
+			}
 
-				50% {
-					opacity: 1;
+			@keyframes bootFade {
+				from { opacity: 0; transform: translateY(4px); }
+				to   { opacity: 1; transform: translateY(0); }
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.boot-loader::before,
+				.boot-dot,
+				.boot-logo {
+					animation: none;
 				}
+				.boot-logo { opacity: 1; }
 			}
 		</style>
 	</div>
