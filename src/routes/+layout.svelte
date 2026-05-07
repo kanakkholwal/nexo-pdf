@@ -16,6 +16,7 @@
   import { onMount, tick } from "svelte";
 // import { ProgressBar } from "@prgm/sveltekit-progress-bar";
   import Loader from "$components/common/loader.svelte";
+  import FeedbackPrompt from "$components/common/feedback-prompt.svelte";
 
   // Attach the beforeinstallprompt listener at hydration time (before onMount)
   // so we don't miss the event when the browser fires it early.
@@ -57,6 +58,8 @@
 <div class="relative flex min-h-screen w-full flex-col">
   {@render children()}
 </div>
+
+<FeedbackPrompt />
 
 {#if config.googleAnalyticsId && config.googleAnalyticsId !== ""}
   <Analytics />
