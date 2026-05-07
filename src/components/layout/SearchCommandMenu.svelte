@@ -262,7 +262,7 @@
   ></div>
 
   <div
-    class="fixed inset-0 z-60 flex items-start justify-center px-4 pt-[12vh]"
+    class="fixed inset-0 z-100 flex items-start justify-center px-4 pt-[12vh]"
     role="dialog"
     aria-modal="true"
     aria-label="Command menu"
@@ -271,7 +271,7 @@
     onkeydown={(e) => e.key === "Escape" && close()}
   >
     <div
-      class="relative w-full max-w-xl transform-gpu overflow-hidden rounded-md border border-border/60 bg-card shadow-2xl"
+      class="relative z-50 w-full max-w-xl transform-gpu overflow-hidden rounded-md border border-border/60 bg-card shadow-2xl"
       transition:scale={{ duration: 220, start: 0.96, easing: cubicOut }}
       onoutroend={() => {
         query = "";

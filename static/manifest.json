@@ -1,35 +1,75 @@
 {
-  "name": "Nexo PDF",
-  "short_name": "Nexo PDF",
-  "description": "The professional PDF toolkit",
+  "name": "Orbit PDF",
+  "short_name": "Orbit PDF",
+  "description": "Free, fast, offline-first PDF toolkit. 100% client-side — your files never leave your device.",
   "icons": [
     {
       "src": "/assets/meta/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/meta/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/assets/meta/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/meta/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "theme_color": "#0e968b",
   "background_color": "#ffffff",
-  "display": "minimal-ui",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "scope": "/",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "id": "com.nexonauts.orbit",
   "dir": "auto",
   "lang": "en",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "prefer_related_applications": false,
   "categories": [
     "business",
     "education",
-    "government",
     "productivity",
     "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Merge PDF",
+      "short_name": "Merge",
+      "description": "Combine multiple PDFs into one",
+      "url": "/tools/merge-pdf?source=pwa-shortcut",
+      "icons": [{ "src": "/assets/meta/web-app-manifest-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Split PDF",
+      "short_name": "Split",
+      "description": "Split a PDF into separate files",
+      "url": "/tools/split-pdf?source=pwa-shortcut",
+      "icons": [{ "src": "/assets/meta/web-app-manifest-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Compress PDF",
+      "short_name": "Compress",
+      "description": "Reduce PDF file size",
+      "url": "/tools/compress-pdf?source=pwa-shortcut",
+      "icons": [{ "src": "/assets/meta/web-app-manifest-192x192.png", "sizes": "192x192" }]
+    }
   ]
 }

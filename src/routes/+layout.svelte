@@ -9,12 +9,17 @@
   import { Toaster } from "$components/ui/sonner";
   import { config } from "$constants/app";
   import Analytics from "$lib/Analytics.svelte";
+  import { setupPwa } from "$lib/pwa.svelte";
   import { getTauriTheme, listenToTauriTheme } from "$lib/runtime/isTauri";
   import { appState } from "$stores/app-state.svelte";
   import { ModeWatcher, setMode } from "mode-watcher";
   import { onMount, tick } from "svelte";
 // import { ProgressBar } from "@prgm/sveltekit-progress-bar";
   import Loader from "$components/common/loader.svelte";
+
+  // Attach the beforeinstallprompt listener at hydration time (before onMount)
+  // so we don't miss the event when the browser fires it early.
+  setupPwa();
 
   // Remove the boot splash screen after the app is mounted
   onMount(async () => {

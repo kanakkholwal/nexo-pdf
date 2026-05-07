@@ -1,9 +1,11 @@
 <script lang="ts">
   import Footer from "$components/common/footer.svelte";
+  import InstallPwaButton from "$components/common/install-pwa-button.svelte";
   import Navbar from "$components/common/navbar.svelte";
   import Seo from "$components/Seo.svelte";
   import { Button } from "$components/ui/button";
   import { config } from "$constants/app";
+  import { pwa } from "$lib/pwa.svelte";
   import { cn } from "$lib/utils";
   import {
     Apple,
@@ -11,6 +13,7 @@
     ArrowUpRight,
     Github,
     Monitor,
+    Smartphone,
     Terminal,
   } from "@lucide/svelte";
   import { cubicOut } from "svelte/easing";
@@ -23,10 +26,14 @@
 
   $effect(() => {
     const ua = window.navigator.userAgent;
+    // Mobile platforms get the PWA — desktop OS detection only applies on desktop.
+    if (pwa.platform === "ios" || pwa.platform === "android") return;
     if (ua.includes("Mac")) detectedOS = "macOS";
     else if (ua.includes("Win")) detectedOS = "Windows";
     else if (ua.includes("Linux")) detectedOS = "Linux";
   });
+
+  let isMobile = $derived(pwa.platform === "ios" || pwa.platform === "android");
 
   const downloadKeywords = [
     ...config.appKeywords,
@@ -167,7 +174,7 @@
         >
           Get {config.appName}
           <span class="text-primary">
-            {detectedOS !== "Unknown" ? `for ${detectedOS}` : "for desktop"}.
+            {#if isMobile}for {pwa.platform === "ios" ? "iOS" : "Android"}.{:else if detectedOS !== "Unknown"}for {detectedOS}.{:else}for desktop.{/if}
           </span>
         </h1>
 
@@ -175,8 +182,13 @@
           class="max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
           in:fly={{ y: 12, duration: 520, delay: 220, easing: cubicOut }}
         >
-          Free, signed installers for every major platform. No account, no
-          tracking, and your documents never leave the device.
+          {#if isMobile}
+            No App Store, no Play Store. Install Orbit PDF as a Progressive Web App —
+            it lives on your home screen, works offline, and never uploads your files.
+          {:else}
+            Free, signed installers for every major platform. No account, no
+            tracking, and your documents never leave the device.
+          {/if}
         </p>
 
         <div
@@ -187,18 +199,24 @@
             <span
               class="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60"
             >
-              {detectedOS !== "Unknown" ? "We detected" : "Auto-detect"}
+              {#if isMobile}We detected{:else if detectedOS !== "Unknown"}We detected{:else}Auto-detect{/if}
             </span>
             <span class="font-mono text-sm tabular-nums text-foreground">
-              {detectedOS !== "Unknown" ? detectedOS : "Unavailable"}
+              {#if isMobile}{pwa.platform === "ios" ? "iOS" : "Android"}{:else if detectedOS !== "Unknown"}{detectedOS}{:else}Unavailable{/if}
             </span>
             <span class="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground/40">
-              {primaryDownload().tag}
+              {isMobile ? "PWA · install in-place" : primaryDownload().tag}
             </span>
           </div>
 
           <div class="flex flex-wrap items-center gap-2">
-            {#if primaryDownload().link}
+            {#if isMobile}
+              <InstallPwaButton size="lg" class="rounded-sm bg-primary px-6 text-primary-foreground shadow-sm shadow-primary/20 hover:bg-primary/90" />
+              <Button href="/install-pwa" variant="outline" size="lg" class="rounded-sm px-5">
+                <Smartphone size={16} />
+                Install instructions
+              </Button>
+            {:else if primaryDownload().link}
               <Button
                 href={primaryDownload().link!}
                 size="lg"
@@ -206,6 +224,10 @@
               >
                 <ArrowDownToLine size={16} />
                 {primaryDownload().label}
+              </Button>
+              <InstallPwaButton variant="outline" size="lg" class="rounded-sm px-5" hideWhenInstalled />
+              <Button href="#all-platforms" variant="outline" size="lg" class="rounded-sm px-5">
+                All platforms
               </Button>
             {:else}
               <Button
@@ -216,16 +238,11 @@
                 Choose platform
                 <ArrowUpRight size={16} />
               </Button>
+              <InstallPwaButton variant="outline" size="lg" class="rounded-sm px-5" hideWhenInstalled />
+              <Button href="#all-platforms" variant="outline" size="lg" class="rounded-sm px-5">
+                All platforms
+              </Button>
             {/if}
-
-            <Button
-              href="#all-platforms"
-              variant="outline"
-              size="lg"
-              class="rounded-sm px-5"
-            >
-              All platforms
-            </Button>
 
             <Button
               href={`${config.github}/releases`}
@@ -252,12 +269,12 @@
             <span
               class="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-primary"
             >
-              Platforms
+              {isMobile ? "Web app" : "Platforms"}
             </span>
             <h2
               class="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
             >
-              Pick the right build for your machine.
+              {isMobile ? "Install on this device." : "Pick the right build for your machine."}
             </h2>
           </div>
           <span
@@ -267,6 +284,30 @@
           </span>
         </div>
 
+        <!-- PWA card — visible on every device. -->
+        <div class="mb-6 flex flex-col gap-4 rounded-md border border-primary/30 bg-primary/5 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-start gap-4">
+            <span class="inline-flex size-9 shrink-0 items-center justify-center rounded-sm bg-primary/15 text-primary">
+              <Smartphone class="size-4" />
+            </span>
+            <div class="flex flex-col gap-1">
+              <h3 class="text-base font-medium tracking-tight text-foreground">
+                Orbit PDF Web App
+              </h3>
+              <p class="text-sm text-muted-foreground">
+                Install in any modern browser. Offline-first, works on mobile, tablet, and desktop.
+              </p>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <InstallPwaButton size="default" class="rounded-sm" />
+            <Button href="/install-pwa" variant="ghost" size="default" class="rounded-sm text-muted-foreground hover:text-foreground">
+              How it works
+            </Button>
+          </div>
+        </div>
+
+        {#if !isMobile}
         <ul class="grid grid-cols-1 gap-px overflow-hidden rounded-md border border-border/60 bg-border/60 md:grid-cols-3">
           {#each platforms as platform, i (platform.id)}
             {@const Icon = platform.icon}
@@ -376,14 +417,11 @@
           {/each}
         </ul>
 
-        <p
-          class="mt-6 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground/60"
-        >
-          Mobile (Android · iOS) — coming soon.
-        </p>
+        {/if}
       </div>
     </section>
 
+    {#if !isMobile}
     <section class="px-5 pb-32 md:px-8">
       <div class="mx-auto w-full max-w-5xl">
         <div
@@ -465,6 +503,7 @@
         </div>
       </div>
     </section>
+    {/if}
   </main>
 
   <Footer />

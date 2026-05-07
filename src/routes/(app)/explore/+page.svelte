@@ -82,7 +82,7 @@
 />
 
 <main
-  class="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 px-1 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-2 sm:px-2 sm:pt-4"
+  class="relative z-5 mx-auto flex w-full max-w-6xl flex-col gap-10 px-1 pb-[max(env(safe-area-inset-bottom),1.5rem)] pt-2 sm:px-2 sm:pt-4"
 >
   <header
     class="relative flex flex-col items-center gap-7 overflow-hidden border-b border-border/60 px-2 pb-10 pt-6 text-center sm:pt-10"
