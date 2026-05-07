@@ -128,12 +128,16 @@ jobs:
           if (-not (Test-Path $makeappx)) { Write-Error "makeappx.exe missing at $makeappx"; exit 1 }
           Write-Host "makeappx: $makeappx"
 
-          # Tag like "v0.1.0" -> AppX 4-part version "0.1.0.0"
+          # Tag like "v0.1.6-v2" -> AppX 4-part numeric version "0.1.6.0".
+          # AppX requires each segment to be 0..65535 with no suffix, so we
+          # strip any "-prerelease" tail and any non-digit chars per segment.
           $raw = $env:TAG -replace '^v',''
-          $parts = $raw.Split('.')
+          $core = ($raw -split '[-+]')[0]
+          $parts = @($core.Split('.') | ForEach-Object { ($_ -replace '\D','') })
+          $parts = @($parts | ForEach-Object { if ($_ -eq '') { '0' } else { $_ } })
           while ($parts.Count -lt 4) { $parts += '0' }
           $appxVersion = ($parts[0..3] -join '.')
-          Write-Host "AppX version: $appxVersion"
+          Write-Host "AppX version: $appxVersion (from tag $($env:TAG))"
 
           $exe = Get-ChildItem -Path src-tauri/target/release -Filter orbit.exe -File | Select-Object -First 1
           if (-not $exe) { Write-Error "orbit.exe not found in src-tauri/target/release"; exit 1 }
