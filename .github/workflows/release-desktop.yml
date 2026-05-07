@@ -109,9 +109,32 @@ jobs:
 
       # Cross-arch (arm64) requires adding `aarch64-pc-windows-msvc` to the
       # tauri-action above; for now we ship x64 only.
+      #
+      # msixbundle-cli expects unpacked AppxContent directories per arch, not
+      # the single .msix that tauri produces. So we locate the tauri-built
+      # .msix, unpack it with makeappx (from the Windows 10 SDK), then bundle.
       - name: Build MSIX bundle
-        run: msixbundle-cli --arch x64
         shell: pwsh
+        run: |
+          $msix = Get-ChildItem -Path src-tauri/target/release/bundle/msix -Filter *.msix -Recurse | Select-Object -First 1
+          if (-not $msix) { Write-Error "No .msix produced by tauri-action"; exit 1 }
+          Write-Host "Found MSIX: $($msix.FullName)"
+
+          $makeappx = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Filter makeappx.exe -Recurse |
+            Where-Object { $_.FullName -match '\\x64\\makeappx.exe$' } |
+            Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $makeappx) { Write-Error "makeappx.exe not found in Windows 10 SDK"; exit 1 }
+          Write-Host "Using makeappx: $($makeappx.FullName)"
+
+          $unpackDir = "src-tauri/target/msix-unpack/x64"
+          New-Item -ItemType Directory -Force -Path $unpackDir | Out-Null
+          & $makeappx.FullName unpack /p $msix.FullName /d $unpackDir /o
+          if ($LASTEXITCODE -ne 0) { Write-Error "makeappx unpack failed"; exit $LASTEXITCODE }
+
+          $outDir = "src-tauri/target/msix"
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          msixbundle-cli --out-dir $outDir --dir-x64 $unpackDir
+          if ($LASTEXITCODE -ne 0) { Write-Error "msixbundle-cli failed"; exit $LASTEXITCODE }
 
       - name: Attach MSIX to release
         env:
